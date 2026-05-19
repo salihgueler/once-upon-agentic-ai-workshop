@@ -91,7 +91,7 @@ By the end:
 
 ## License
 
-Workshop content is provided as-is. The underlying code samples follow the license of the [aws-samples TypeScript repository](https://github.com/aws-samples/sample-once-upon-agentic-ai-typescript).
+MIT
 
 ---
 
