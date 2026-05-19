@@ -12,22 +12,21 @@ This is a markdown-only port of the original AWS Workshop Studio version, design
 
 ## Workshop format
 
-- **Solutions** live in the solutions folder.
+- **Solutions** live either at the end of the step or in the solutions folder.
 - **Workshop content** lives here, in `chapters/`. Each chapter walks you through editing the corresponding files in the source repo, then running them.
 
 ## Table of contents
 
 | #   | Chapter                                                     | What you'll build                                           |
-| --- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| --- | ----------------------------------------------------------- | ----------------------------------------------------------- | --- |
 | 0   | [An Unexpected Adventure](chapters/00-prerequisites.md)     | Local environment, Bedrock model access                     |
 | 1   | [The Art of Agent Summoning](chapters/01-strands-basics.md) | Your first Strands agent                                    |
 | 2   | [The Adventurer's Arsenal](chapters/02-built-in-tools.md)   | Built-in vended tools (`httpRequest`, `bash`, `fileEditor`) |
 | 3   | [Forging Custom Tools](chapters/03-custom-tools.md)         | A custom dice-rolling tool with Zod schemas                 |
 | 4   | [Planar Portals: MCP](chapters/04-mcp-integration.md)       | An MCP server + client for distributed tools                |
 | 5   | [The Grand Alliance: A2A](chapters/05-a2a-integration.md)   | Three agents collaborating via Agent-to-Agent               |
-| 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a hosted UI               |
-| 7   | [Stretch Goals](chapters/07-stretch-goals.md)               | Visual storytelling, NPCs, world generation                 |
-| 8   | [Cleanup](chapters/08-cleanup.md)                           | Tidy up local + AWS resources                               |
+| 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a hosted UI               |     |
+| 7   | [Cleanup](chapters/08-cleanup.md)                           | Tidy up local + AWS resources                               |
 
 > Complete chapters in order — each one builds on the previous.
 

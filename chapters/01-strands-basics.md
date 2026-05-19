@@ -8,18 +8,22 @@
 
 ## Quest objective
 
-Open `1_strands_basics/simple_agent.ts` and turn the `TODO` comments into a working agent — your first AI Game Master.
+To build your first agent and run it successfully.
+
+Install the Strands library like the following:
 
 ```bash
-cd sample-once-upon-agentic-ai-typescript
+npm install @strands-agents/sdk
 ```
+
+Create a new file called `src/agent.ts`.
 
 ## Step 1 — Enable debug logging
 
 In the TypeScript SDK, log verbosity is controlled by the `STRANDS_LOG_LEVEL` environment variable. Set it before running the script:
 
 ```bash
-STRANDS_LOG_LEVEL=debug npx tsx 1_strands_basics/simple_agent.ts
+STRANDS_LOG_LEVEL=debug npx tsx src/agent.ts
 ```
 
 Levels: `debug`, `info`, `warn`, `error`. Start with `info` and dial up to `debug` when you want to see what the agent is doing under the hood.
@@ -44,7 +48,7 @@ Agents are awaited:
 
 ```typescript
 const result = await agent.invoke(
-  "Hi, I am an adventurer ready for adventure!"
+  "Hi, I am an adventurer ready for adventure!",
 );
 ```
 
@@ -53,7 +57,7 @@ See the [TypeScript quickstart](https://strandsagents.com/latest/documentation/d
 ## Step 4 — Run it
 
 ```bash
-npx tsx 1_strands_basics/simple_agent.ts
+npx tsx src/agent.ts
 ```
 
 If the script returns enthusiastic flavor-text from a Game Master, you've successfully summoned an agent.
@@ -68,7 +72,7 @@ const agent = new Agent({
 });
 
 const result = await agent.invoke(
-  "Hi, I am an adventurer ready for adventure!"
+  "Hi, I am an adventurer ready for adventure!",
 );
 ```
 

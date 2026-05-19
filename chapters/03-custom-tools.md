@@ -10,22 +10,16 @@
 
 Build the legendary **Dice of Destiny** — a custom tool that rolls a die with a configurable number of faces, exposed to the agent so it can roll dice itself.
 
-You'll edit `3_custom_tools/agent_with_dice_roll_tool.ts`.
-
-```bash
-cd sample-once-upon-agentic-ai-typescript
-```
-
 ## How custom tools work
 
 A Strands custom tool is built with the `tool()` factory:
 
-| Field | Purpose |
-| --- | --- |
-| `name` | The identifier the agent uses to invoke the tool |
-| `description` | Tells the agent *when* and *how* to use the tool |
+| Field         | Purpose                                                                 |
+| ------------- | ----------------------------------------------------------------------- |
+| `name`        | The identifier the agent uses to invoke the tool                        |
+| `description` | Tells the agent _when_ and _how_ to use the tool                        |
 | `inputSchema` | A [Zod](https://zod.dev/) schema (or JSON Schema) describing parameters |
-| `callback` | The function executed when the tool is called |
+| `callback`    | The function executed when the tool is called                           |
 
 See the [custom tools docs](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/tools/custom-tools/).
 
@@ -38,23 +32,34 @@ import z from "zod";
 
 ## Step 2 — Define the input schema
 
-`.describe()` is read by the agent and helps it reason about the parameter:
+`.description` is read by the agent and helps it reason about the parameter:
 
 ```typescript
-inputSchema: z.object({
-  faces: z.number().default(6).describe("Number of faces on the dice"),
+const rollDice = tool({
+  name: "roll_dice",
+  description: "🎲 Roll a dice with a specified number of faces.",
+  inputSchema: z.object({
+    faces: z.number().default(6).describe("Number of faces on the dice"),
+  }),
 });
 ```
 
 ## Step 3 — Implement the callback
 
 ```typescript
-callback: (input) => {
-  const faces = input.faces;
-  if (faces < 1) throw new Error("Dice must have at least 1 face");
-  const result = Math.floor(Math.random() * faces) + 1;
-  return `Rolled a d${faces} and got: ${result}`;
-};
+const rollDice = tool({
+  name: "roll_dice",
+  description: "🎲 Roll a dice with a specified number of faces.",
+  inputSchema: z.object({
+    faces: z.number().default(6).describe("Number of faces on the dice"),
+  }),
+  callback: (input) => {
+    const faces = input.faces;
+    if (faces < 1) throw new Error("Dice must have at least 1 face");
+    const result = Math.floor(Math.random() * faces) + 1;
+    return `Rolled a d${faces} and got: ${result}`;
+  },
+});
 ```
 
 ## Step 4 — Equip the agent
@@ -71,7 +76,7 @@ const diceMaster = new Agent({
 ## Step 5 — Run it
 
 ```bash
-npx tsx 3_custom_tools/agent_with_dice_roll_tool.ts
+npx tsx src/agent.ts
 ```
 
 Watch the agent:
@@ -111,7 +116,7 @@ const diceMaster = new Agent({
 });
 
 await diceMaster.invoke(
-  "Help me create a new D&D character! Roll the strength, wisdom, charisma and intelligence abilities scores using 4d6 drop lowest method."
+  "Help me create a new D&D character! Roll the strength, wisdom, charisma and intelligence abilities scores using 4d6 drop lowest method.",
 );
 ```
 

@@ -10,12 +10,6 @@
 
 Tools are the primary way to extend agent capabilities — they let the agent fetch data, run shell commands, and edit files. In this chapter you'll equip a Strands agent with the built-in `httpRequest` tool so it can read web pages and answer questions about them.
 
-You'll edit `2_built_in_tools/agent_with_built_in_tools.ts`.
-
-```bash
-cd sample-once-upon-agentic-ai-typescript
-```
-
 ## Built-in (vended) tools
 
 Strands ships with a library of vended tools you can import directly:
@@ -50,8 +44,19 @@ const agent = new Agent({
 
 ## Step 3 — Run it
 
+Invoke the agent.
+
+```ts
+await agent.invoke(`
+  Using the website https://en.wikipedia.org/wiki/Dungeons_%26_Dragons tell me the name of the designers of
+  Dungeons and Dragons.
+`);
+```
+
+and run it.
+
 ```bash
-npx tsx 2_built_in_tools/agent_with_built_in_tools.ts
+npx tsx src/agent.ts
 ```
 
 The agent will:
@@ -91,7 +96,7 @@ A more advanced challenge lives in `2_built_in_tools/bonus_quest.ts`. Build an a
 > **Important** — `bash` and `fileEditor` ask for explicit permission before each action. Run with debug logging so you see the consent prompts:
 >
 > ```bash
-> STRANDS_LOG_LEVEL=debug npx tsx 2_built_in_tools/bonus_quest.ts
+> STRANDS_LOG_LEVEL=debug npx tsx src/agent.ts
 > ```
 >
 > Type `y` and press Enter to approve each step.
@@ -108,7 +113,7 @@ const arcaneScribe = new Agent({
 });
 
 const response = await arcaneScribe.invoke(
-  "Create a magical scroll that generates the first 10 numbers of the Fibonacci sequence and demonstrate its power!"
+  "Create a magical scroll that generates the first 10 numbers of the Fibonacci sequence and demonstrate its power!",
 );
 console.log(response);
 ```

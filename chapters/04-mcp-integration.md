@@ -12,18 +12,24 @@ Learn the [Model Context Protocol (MCP)](https://strandsagents.com/latest/docume
 
 You'll build:
 
-1. **An MCP server** at `4_mcp_integration/dice_roll_mcp_server.ts` that exposes the `roll_dice` tool
-2. **An MCP client** at `4_mcp_integration/gamemaster_mcp_client.ts` that connects to the server and gives those tools to a Strands agent
-
-```bash
-cd sample-once-upon-agentic-ai-typescript
-```
+1. **An MCP server** that exposes the `roll_dice` tool
+2. **An MCP client** that connects to the server and gives those tools to a Strands agent
 
 ---
 
 ## Part 1 — The MCP server
 
-### Step 1 — Imports
+### Step 1 — Create files, install libraries and paste imports
+
+Run the following:
+
+```bash
+npm install @modelcontextprotocol/sdk
+npm install express
+npm install -D @types/express
+```
+
+Create a new file under `src/mcp-server/server.ts` called.
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -37,13 +43,18 @@ See the [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-
 ### Step 2 — Create the server
 
 ```typescript
-const mcpServer = new McpServer({
-  name: "D&D Dice Roll Service",
-  version: "1.0.0",
-});
+function createServer(): McpServer {
+  const mcpServer = new McpServer({
+    name: "D&D Dice Roll Service",
+    version: "1.0.0",
+  });
+  return mcpServer;
+}
 ```
 
 ### Step 3 — Register the dice tool
+
+Paste the following under `createServer` function:
 
 ```typescript
 mcpServer.registerTool(
@@ -58,12 +69,12 @@ mcpServer.registerTool(
   async ({ faces, count }) => {
     const rolls = Array.from(
       { length: count },
-      () => Math.floor(Math.random() * faces) + 1
+      () => Math.floor(Math.random() * faces) + 1,
     );
     const total = rolls.reduce((sum, roll) => sum + roll, 0);
     const result = { rolls, total, faces, count };
     return { content: [{ type: "text", text: JSON.stringify(result) }] };
-  }
+  },
 );
 ```
 
@@ -89,7 +100,9 @@ app.post("/mcp", async (req, res) => {
 });
 
 app.listen(8080, () => {
-  console.log("🎲 D&D Dice Roll MCP Server running on http://localhost:8080/mcp");
+  console.log(
+    "🎲 D&D Dice Roll MCP Server running on http://localhost:8080/mcp",
+  );
 });
 ```
 
@@ -97,7 +110,11 @@ app.listen(8080, () => {
 
 ## Part 2 — The MCP client
 
-### Step 1 — Imports
+### Step 1 — Create file and paste imports
+
+Create a new file under `src/mcp-client/agent.ts` called.
+
+Afterwards, paste the following:
 
 ```typescript
 import { Agent, McpClient } from "@strands-agents/sdk";
@@ -110,7 +127,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 ```typescript
 const mcpClient = new McpClient({
   transport: new StreamableHTTPClientTransport(
-    new URL("http://localhost:8080/mcp")
+    new URL("http://localhost:8080/mcp"),
   ) as Transport,
 });
 ```
@@ -139,7 +156,7 @@ await gamemaster.invoke("Roll a d20");
 Run the server in one terminal:
 
 ```bash
-npx tsx 4_mcp_integration/dice_roll_mcp_server.ts
+npx tsx src/mcp-server/server.ts
 ```
 
 You should see:
@@ -151,7 +168,7 @@ You should see:
 In a second terminal, run the client:
 
 ```bash
-npx tsx 4_mcp_integration/gamemaster_mcp_client.ts
+npx tsx src/mcp-client/agent.ts
 ```
 
 Try prompts like:
@@ -163,7 +180,7 @@ Try prompts like:
 
 ## Reference solutions
 
-### `dice_roll_mcp_server.ts`
+### `mcp-server/server.ts`
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -189,12 +206,12 @@ function createServer(): McpServer {
     async ({ faces, count }) => {
       const rolls = Array.from(
         { length: count },
-        () => Math.floor(Math.random() * faces) + 1
+        () => Math.floor(Math.random() * faces) + 1,
       );
       const total = rolls.reduce((sum, roll) => sum + roll, 0);
       const result = { rolls, total, faces, count };
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
-    }
+    },
   );
 
   return server;
@@ -228,12 +245,12 @@ app.delete("/mcp", async (_req, res) => {
 
 app.listen(PORT, () => {
   console.log(
-    `🎲 D&D Dice Roll MCP Server running on http://localhost:${PORT}/mcp`
+    `🎲 D&D Dice Roll MCP Server running on http://localhost:${PORT}/mcp`,
   );
 });
 ```
 
-### `gamemaster_mcp_client.ts`
+### `mcp-client/agent.ts`
 
 ```typescript
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -246,12 +263,15 @@ async function main() {
 
   const mcpClient = new McpClient({
     transport: new StreamableHTTPClientTransport(
-      new URL("http://localhost:8080/mcp")
+      new URL("http://localhost:8080/mcp"),
     ) as Transport,
   });
 
   const tools = await mcpClient.listTools();
-  console.log("Available tools:", tools.map((t) => t.name));
+  console.log(
+    "Available tools:",
+    tools.map((t) => t.name),
+  );
 
   const gamemaster = new Agent({
     tools,

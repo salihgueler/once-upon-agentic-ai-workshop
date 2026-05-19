@@ -27,8 +27,10 @@ This workshop uses the TypeScript SDK throughout.
 Create a folder in your computer to hold all the steps. You can call it `game-master-strands`.
 
 ```bash
-mkdir game-master-strands
-cd game-master-strands
+mkdir my-agent
+cd my-agent
+npm init -y
+npm pkg set type=module
 ```
 
 ### 2. Verify Node.js
@@ -43,6 +45,13 @@ npm --version
 ```bash
 npm install
 ```
+
+### 4. Creating The Amazon Bedrock API Key
+
+- Go to AWS Console.
+- Search for Amazon Bedrock and go to the service
+- Create a long term API Key (for 5 days only)
+- Copy and paste the export like described in your terminal
 
 ## What you'll need per chapter
 

@@ -26,8 +26,8 @@ There's no specific cleanup required for Amazon Bedrock itself.
 
 2. **Delete temp data** if you no longer need it:
    - Generated Fibonacci files from Chapter 2
-   - `5_a2a_integration/utils/dnd_knowledge_base/` — the LanceDB index
-   - `5_a2a_integration/agents/character_agent/characters.json` — the character store
+   - `src/dnd_knowledge_base/` — the LanceDB index
+   - `src/characters.json` — the character store
    - `node_modules/` if you're done with the project: `rm -rf node_modules`
 
 ## Where to next
