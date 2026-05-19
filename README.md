@@ -12,7 +12,7 @@ This is a markdown-only port of the original AWS Workshop Studio version, design
 
 ## Workshop format
 
-- **Solutions** live either at the end of the step or in the solutions folder.
+- **Solutions** live either at the end of the step.
 - **Workshop content** lives here, in `chapters/`. Each chapter walks you through editing the corresponding files in the source repo, then running them.
 
 ## Table of contents

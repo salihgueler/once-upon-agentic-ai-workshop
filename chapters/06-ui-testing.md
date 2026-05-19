@@ -14,29 +14,9 @@ Connect your locally-running orchestrator (port 8009 from Chapter 5) to a hosted
 
 The hosted UI uses HTTPS, so it can't talk directly to `http://localhost:8009`. You need an HTTPS-tunnel that forwards public traffic to your local port.
 
-### Step 1 — Open an SSH tunnel
+### Step 1 — Connect via the web UI
 
-From your project directory, run:
-
-```bash
-ssh -R 80:0.0.0.0:8009 nokey@localhost.run
-```
-
-This:
-
-- Forwards traffic from a public HTTPS URL → your local port 8009
-- Returns a unique `https://*.lhr.life` (or similar) URL in the terminal
-- Stays open until you `Ctrl+C`
-
-Copy the HTTPS URL it prints.
-
-You should see something like:
-
-![Tunnel output](../assets/nokey.png)
-
-### Step 2 — Connect via the web UI
-
-Open the [hosted Game Master UI](https://aws-samples.github.io/sample-once-upon-agentic-ai/) and:
+Open the [hosted Game Master UI](https://github.com/salihgueler/game-master-frontend) and:
 
 1. Paste your tunnel URL into the **Server URL** field
 2. Click **Connect**
@@ -60,12 +40,12 @@ Watch your terminal logs — the orchestrator prints debug info as each request 
 
 ## Troubleshooting
 
-| Problem | Fix |
-| --- | --- |
-| **Connection refused** | Confirm the orchestrator is running on port 8009 and the SSH tunnel is up |
-| **Invalid Server URL** | Make sure you're using the *HTTPS* URL printed by `localhost.run`, no typos |
-| **Slow responses** | Check your local CPU/RAM; consider a smaller model in the orchestrator config |
-| **Tunnel drops** | Re-run the `ssh -R` command — `localhost.run` rotates URLs each session |
+| Problem                | Fix                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| **Connection refused** | Confirm the orchestrator is running on port 8009 and the SSH tunnel is up     |
+| **Invalid Server URL** | Make sure you're using the _HTTPS_ URL printed by `localhost.run`, no typos   |
+| **Slow responses**     | Check your local CPU/RAM; consider a smaller model in the orchestrator config |
+| **Tunnel drops**       | Re-run the `ssh -R` command — `localhost.run` rotates URLs each session       |
 
 ---
 
