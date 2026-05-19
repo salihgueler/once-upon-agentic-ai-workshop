@@ -87,7 +87,6 @@ By the end:
 - [Strands TypeScript SDK on GitHub](https://github.com/strands-agents/sdk-typescript)
 - [Strands example projects](https://strandsagents.com/latest/documentation/docs/examples/)
 - [Original Python workshop (reference)](https://github.com/aws-samples/sample-once-upon-agentic-ai)
-- [TypeScript port (source code for this workshop)](https://github.com/aws-samples/sample-once-upon-agentic-ai-typescript)
 
 ## License
 
