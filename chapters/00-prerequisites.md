@@ -22,13 +22,13 @@ This workshop uses the TypeScript SDK throughout.
 
 ## Setup
 
-### 1. Clone the source repository
+### 1. Create a folder
 
-The hands-on code lives in the [aws-samples TypeScript port](https://github.com/aws-samples/sample-once-upon-agentic-ai-typescript). Clone it and use it as your working directory throughout the workshop:
+Create a folder in your computer to hold all the steps. You can call it `game-master-strands`.
 
 ```bash
-git clone https://github.com/aws-samples/sample-once-upon-agentic-ai-typescript.git
-cd sample-once-upon-agentic-ai-typescript
+mkdir game-master-strands
+cd game-master-strands
 ```
 
 ### 2. Verify Node.js
@@ -44,28 +44,18 @@ npm --version
 npm install
 ```
 
-### 4. Verify `tsx`
-
-`tsx` is included as a dev dependency and lets you run `.ts` files directly without a separate compile step:
-
-```bash
-npx tsx --version
-```
-
-That's it — there's no virtualenv to activate. `node_modules/` handles isolation.
-
 ## What you'll need per chapter
 
-| Chapter | Concept |
-| --- | --- |
-| 1 | Creating your first agent |
-| 2 | Built-in (vended) tools |
-| 3 | Custom tools with Zod schemas |
-| 4 | Model Context Protocol (MCP) |
-| 5 | Agent-to-Agent (A2A) orchestration |
-| 6 | Web UI for your Game Master |
-| 7 | Stretch goals & enhancements |
-| 8 | Cleanup |
+| Chapter | Concept                            |
+| ------- | ---------------------------------- |
+| 1       | Creating your first agent          |
+| 2       | Built-in (vended) tools            |
+| 3       | Custom tools with Zod schemas      |
+| 4       | Model Context Protocol (MCP)       |
+| 5       | Agent-to-Agent (A2A) orchestration |
+| 6       | Web UI for your Game Master        |
+| 7       | Stretch goals & enhancements       |
+| 8       | Cleanup                            |
 
 ---
 

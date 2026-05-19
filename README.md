@@ -12,30 +12,29 @@ This is a markdown-only port of the original AWS Workshop Studio version, design
 
 ## Workshop format
 
-- **Source code** lives in the [aws-samples/sample-once-upon-agentic-ai-typescript](https://github.com/aws-samples/sample-once-upon-agentic-ai-typescript) repository — clone it once at the start of Chapter 0.
+- **Solutions** live in the solutions folder.
 - **Workshop content** lives here, in `chapters/`. Each chapter walks you through editing the corresponding files in the source repo, then running them.
-- **No Workshop Studio infrastructure** — no `contentspec.yaml`, no `weight` ordering, no static-site generator. Just markdown.
 
 ## Table of contents
 
-| # | Chapter | What you'll build |
-| - | --- | --- |
-| 0 | [An Unexpected Adventure](chapters/00-prerequisites.md) | Local environment, Bedrock model access |
-| 1 | [The Art of Agent Summoning](chapters/01-strands-basics.md) | Your first Strands agent |
-| 2 | [The Adventurer's Arsenal](chapters/02-built-in-tools.md) | Built-in vended tools (`httpRequest`, `bash`, `fileEditor`) |
-| 3 | [Forging Custom Tools](chapters/03-custom-tools.md) | A custom dice-rolling tool with Zod schemas |
-| 4 | [Planar Portals: MCP](chapters/04-mcp-integration.md) | An MCP server + client for distributed tools |
-| 5 | [The Grand Alliance: A2A](chapters/05-a2a-integration.md) | Three agents collaborating via Agent-to-Agent |
-| 6 | [Web UI Testing](chapters/06-ui-testing.md) | Connect your local Game Master to a hosted UI |
-| 7 | [Stretch Goals](chapters/07-stretch-goals.md) | Visual storytelling, NPCs, world generation |
-| 8 | [Cleanup](chapters/08-cleanup.md) | Tidy up local + AWS resources |
+| #   | Chapter                                                     | What you'll build                                           |
+| --- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| 0   | [An Unexpected Adventure](chapters/00-prerequisites.md)     | Local environment, Bedrock model access                     |
+| 1   | [The Art of Agent Summoning](chapters/01-strands-basics.md) | Your first Strands agent                                    |
+| 2   | [The Adventurer's Arsenal](chapters/02-built-in-tools.md)   | Built-in vended tools (`httpRequest`, `bash`, `fileEditor`) |
+| 3   | [Forging Custom Tools](chapters/03-custom-tools.md)         | A custom dice-rolling tool with Zod schemas                 |
+| 4   | [Planar Portals: MCP](chapters/04-mcp-integration.md)       | An MCP server + client for distributed tools                |
+| 5   | [The Grand Alliance: A2A](chapters/05-a2a-integration.md)   | Three agents collaborating via Agent-to-Agent               |
+| 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a hosted UI               |
+| 7   | [Stretch Goals](chapters/07-stretch-goals.md)               | Visual storytelling, NPCs, world generation                 |
+| 8   | [Cleanup](chapters/08-cleanup.md)                           | Tidy up local + AWS resources                               |
 
 > Complete chapters in order — each one builds on the previous.
 
 ## Prerequisites
 
 - **Node.js 20+** ([download](https://nodejs.org/en/download/))
-- AWS credentials with [Bedrock model access enabled](https://console.aws.amazon.com/bedrock) (or another supported model provider)
+- Amazon Bedrock API Key
 - Basic TypeScript knowledge
 - A terminal
 
@@ -64,14 +63,14 @@ Strands is an open-source SDK (Python and TypeScript) for building AI agents and
 
 Glossary:
 
-| Term | Meaning |
-| --- | --- |
-| **Agent** | An LLM-driven worker that can reason and call tools |
-| **Tool** | A callable function the agent can invoke |
-| **System prompt** | The instructions that shape an agent's behavior |
-| **Model provider** | Bedrock, OpenAI, Anthropic, etc. |
-| **MCP** | Model Context Protocol — for remote tool servers |
-| **A2A** | Agent-to-Agent — for agents that call other agents |
+| Term               | Meaning                                             |
+| ------------------ | --------------------------------------------------- |
+| **Agent**          | An LLM-driven worker that can reason and call tools |
+| **Tool**           | A callable function the agent can invoke            |
+| **System prompt**  | The instructions that shape an agent's behavior     |
+| **Model provider** | Bedrock, OpenAI, Anthropic, etc.                    |
+| **MCP**            | Model Context Protocol — for remote tool servers    |
+| **A2A**            | Agent-to-Agent — for agents that call other agents  |
 
 ## Learning objectives
 
