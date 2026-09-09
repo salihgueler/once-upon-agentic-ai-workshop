@@ -18,44 +18,46 @@ A Strands custom tool is built with the `tool()` factory:
 | ------------- | ----------------------------------------------------------------------- |
 | `name`        | The identifier the agent uses to invoke the tool                        |
 | `description` | Tells the agent _when_ and _how_ to use the tool                        |
-| `inputSchema` | A [Zod](https://zod.dev/) schema (or JSON Schema) describing parameters |
+| `inputSchema` | A [Zod](https://zod.dev/) schema describing the parameters              |
 | `callback`    | The function executed when the tool is called                           |
 
-See the [custom tools docs](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/tools/custom-tools/).
+The great thing about Zod here: the callback's `input` is **fully typed** from the schema — no `any`, no manual casting.
 
 ## Step 1 — Imports
 
 ```typescript
 import { Agent, tool } from "@strands-agents/sdk";
-import z from "zod";
+import { z } from "zod";
+import { createModel } from "./model.js";
 ```
 
 ## Step 2 — Define the input schema
 
-`.description` is read by the agent and helps it reason about the parameter:
+`.describe()` is read by the agent and helps it reason about the parameter:
 
 ```typescript
 const rollDice = tool({
   name: "roll_dice",
-  description: "🎲 Roll a dice with a specified number of faces.",
+  description: "🎲 Roll a die with a specified number of faces.",
   inputSchema: z.object({
-    faces: z.number().default(6).describe("Number of faces on the dice"),
+    faces: z.number().int().min(1).default(6).describe("Number of faces on the die"),
   }),
 });
 ```
 
 ## Step 3 — Implement the callback
 
+Because `faces` has a Zod `.default(6)`, it is always defined by the time your callback runs — Zod fills it in during parsing:
+
 ```typescript
 const rollDice = tool({
   name: "roll_dice",
-  description: "🎲 Roll a dice with a specified number of faces.",
+  description: "🎲 Roll a die with a specified number of faces.",
   inputSchema: z.object({
-    faces: z.number().default(6).describe("Number of faces on the dice"),
+    faces: z.number().int().min(1).default(6).describe("Number of faces on the die"),
   }),
   callback: (input) => {
-    const faces = input.faces;
-    if (faces < 1) throw new Error("Dice must have at least 1 face");
+    const faces = input.faces; // number — typed from the schema
     const result = Math.floor(Math.random() * faces) + 1;
     return `Rolled a d${faces} and got: ${result}`;
   },
@@ -68,6 +70,7 @@ The agent can only call tools listed in its `tools` array:
 
 ```typescript
 const diceMaster = new Agent({
+  model: createModel(),
   tools: [rollDice],
   systemPrompt: "...",
 });
@@ -76,7 +79,7 @@ const diceMaster = new Agent({
 ## Step 5 — Run it
 
 ```bash
-npx tsx src/agent.ts
+npm run agent
 ```
 
 Watch the agent:
@@ -91,23 +94,24 @@ Watch the agent:
 
 ```typescript
 import { Agent, tool } from "@strands-agents/sdk";
-import z from "zod";
+import { z } from "zod";
+import { createModel } from "./model.js";
 
 const rollDice = tool({
   name: "roll_dice",
-  description: "🎲 Roll a dice with a specified number of faces.",
+  description: "🎲 Roll a die with a specified number of faces.",
   inputSchema: z.object({
-    faces: z.number().default(6).describe("Number of faces on the dice"),
+    faces: z.number().int().min(1).default(6).describe("Number of faces on the die"),
   }),
   callback: (input) => {
     const faces = input.faces;
-    if (faces < 1) throw new Error("Dice must have at least 1 face");
     const result = Math.floor(Math.random() * faces) + 1;
     return `Rolled a d${faces} and got: ${result}`;
   },
 });
 
 const diceMaster = new Agent({
+  model: createModel(),
   tools: [rollDice],
   systemPrompt: `You are Lady Luck, the mystical keeper of dice and fortune in D&D adventures.
     You speak with theatrical flair and always announce dice rolls with appropriate drama.
@@ -115,15 +119,17 @@ const diceMaster = new Agent({
     When rolling ability scores, remember the traditional method: roll 4d6, drop the lowest die.`,
 });
 
-await diceMaster.invoke(
-  "Help me create a new D&D character! Roll the strength, wisdom, charisma and intelligence abilities scores using 4d6 drop lowest method.",
+const result = await diceMaster.invoke(
+  "Help me create a new D&D character! Roll the strength, wisdom, charisma and intelligence ability scores using the 4d6-drop-lowest method.",
 );
+console.log(result);
 ```
 
 ## What you learned
 
 - The four parts of a Strands custom tool
 - How Zod schemas double as both validation and agent-facing documentation
+- How a Zod `.default()` makes a field optional to the caller but always present in your callback
 - Why a tool only fires if it's in the agent's `tools` array
 
 ---

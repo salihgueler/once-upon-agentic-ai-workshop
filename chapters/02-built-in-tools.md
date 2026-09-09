@@ -8,14 +8,16 @@
 
 ## Quest objective
 
-Tools are the primary way to extend agent capabilities — they let the agent fetch data, run shell commands, and edit files. In this chapter you'll equip a Strands agent with the built-in `httpRequest` tool so it can read web pages and answer questions about them.
+Tools are the primary way to extend an agent's capabilities — they let it fetch data, run shell commands, and edit files. In this chapter you'll equip your agent with the built-in `httpRequest` tool so it can read web pages and answer questions about them.
+
+> **Local models and tool use** — Tool calling requires a model trained for it. `gemma4:latest` is the workshop default because it was verified with Strands custom, HTTP, and MCP tools. If you swap models and tool calls appear as plain JSON text instead of executing, that is a model-compatibility failure—not a successful tool call.
 
 ## Built-in (vended) tools
 
-Strands ships with a library of vended tools you can import directly:
+Strands ships a library of vended tools you import from dedicated subpaths of `@strands-agents/sdk`:
 
 - `httpRequest` — fetch web pages and call HTTP APIs
-- `bash` — execute shell commands
+- `bash` — execute shell commands on the host
 - `fileEditor` — read and write files
 
 ```typescript
@@ -24,7 +26,7 @@ import { bash } from "@strands-agents/sdk/vended-tools/bash";
 import { fileEditor } from "@strands-agents/sdk/vended-tools/file-editor";
 ```
 
-See the full list in the [community-tools docs](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/tools/community-tools-package/).
+Each tool lives under its own subpath (`@strands-agents/sdk/vended-tools/<name>`) so you only pull in what you use.
 
 ## Step 1 — Import the HTTP tool
 
@@ -34,82 +36,82 @@ import { httpRequest } from "@strands-agents/sdk/vended-tools/http-request";
 
 ## Step 2 — Equip the agent
 
-Pass the tool in the `tools` array:
+Pass tools in the `tools` array. Keep using `createModel()` so this still runs locally:
 
 ```typescript
+import { Agent } from "@strands-agents/sdk";
+import { httpRequest } from "@strands-agents/sdk/vended-tools/http-request";
+import { createModel } from "./model.js";
+
 const agent = new Agent({
+  model: createModel(),
   tools: [httpRequest],
 });
 ```
 
 ## Step 3 — Run it
 
-Invoke the agent.
+Ask a question that requires fetching a page:
 
-```ts
-await agent.invoke(`
-  Using the website https://en.wikipedia.org/wiki/Dungeons_%26_Dragons tell me the name of the designers of
-  Dungeons and Dragons.
+```typescript
+const result = await agent.invoke(`
+  Use the HTTP tool to fetch https://www.dnd5eapi.co/api/2014/classes
+  and name the first three classes in the JSON response.
 `);
+console.log(result);
 ```
 
-and run it.
-
 ```bash
-npx tsx src/agent.ts
+npm run agent
 ```
 
 The agent will:
 
-1. Receive the prompt about D&D's creators
-2. Decide on its own to call `httpRequest`
-3. Fetch the Wikipedia page
-4. Extract the relevant designers' names from the HTML
-5. Reply with the answer
+1. Receive the request for D&D class data
+2. Call `httpRequest` instead of inventing an answer
+3. Fetch the small JSON response from the D&D 5e API
+4. Read the first three class names
+5. Reply with `Barbarian`, `Bard`, and `Cleric`
 
-You can verify it against the [Wikipedia page](https://en.wikipedia.org/wiki/Dungeons_%26_Dragons).
+A successful run prints a real tool announcement before the answer. Plain-text JSON that merely *describes* a tool call is not success.
 
 ## Reference solution
 
 ```typescript
 import { Agent } from "@strands-agents/sdk";
 import { httpRequest } from "@strands-agents/sdk/vended-tools/http-request";
+import { createModel } from "./model.js";
 
 const agent = new Agent({
+  model: createModel(),
   tools: [httpRequest],
 });
 
-await agent.invoke(`
-  Using the website https://en.wikipedia.org/wiki/Dungeons_%26_Dragons tell me the name of the designers of
-  Dungeons and Dragons.
+const result = await agent.invoke(`
+  Use the HTTP tool to fetch https://www.dnd5eapi.co/api/2014/classes
+  and name the first three classes in the JSON response.
 `);
+console.log(result);
 ```
 
 ## Bonus quest — Fibonacci scroll
 
-A more advanced challenge lives in `2_built_in_tools/bonus_quest.ts`. Build an agent equipped with `bash` and `fileEditor` that:
+Try an agent equipped with `bash` and `fileEditor` that generates a TypeScript file containing a Fibonacci implementation, executes it, and shows the result.
 
-1. Generates a TypeScript file containing a Fibonacci sequence implementation
-2. Executes it
-3. Demonstrates the result
-
-> **Important** — `bash` and `fileEditor` ask for explicit permission before each action. Run with debug logging so you see the consent prompts:
->
-> ```bash
-> STRANDS_LOG_LEVEL=debug npx tsx src/agent.ts
-> ```
->
-> Type `y` and press Enter to approve each step.
+> **Consent** — `bash` and `fileEditor` can change your system, so run with debug logging to see what's happening: `npm run agent:debug`.
 
 ```typescript
 import { Agent } from "@strands-agents/sdk";
 import { bash } from "@strands-agents/sdk/vended-tools/bash";
 import { fileEditor } from "@strands-agents/sdk/vended-tools/file-editor";
+import { createModel } from "./model.js";
 
 const arcaneScribe = new Agent({
+  model: createModel(),
   tools: [fileEditor, bash],
   systemPrompt: `You are Kiro the Grey Hat, a wizard who specializes in the ancient art of code magic.
-    When asked to create spells (code), you inscribe them on parchment (files) in the current working directory and then cast them to demonstrate their power.`,
+    When asked to create spells (code), you inscribe them on parchment (files) in the current working
+    directory and then cast them to demonstrate their power.`,
 });
 
 const response = await arcaneScribe.invoke(
@@ -120,21 +122,11 @@ console.log(response);
 
 Once it finishes, check the project root for the generated Fibonacci file.
 
-## Tool consent
-
-Powerful tools (`bash`, `fileEditor`) prompt for permission before each call. To bypass for testing only:
-
-```bash
-export BYPASS_TOOL_CONSENT=true
-```
-
-Use this with caution — it removes a guardrail that's there to protect your system.
-
 ## What you learned
 
-- How to import and wire up vended tools
+- How to import and wire up vended tools from their subpaths
 - How agents autonomously decide when to invoke a tool
-- The consent model for filesystem / shell tools
+- That tool use depends on a tool-capable model — including your local one
 
 ---
 
