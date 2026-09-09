@@ -8,7 +8,7 @@
 
 ## Quest objective
 
-So far each agent has worked alone. Now you'll let multiple agents collaborate, each with its own tools and expertise, using [Agent2Agent (A2A)](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/multi-agent/agent-to-agent/).
+So far each agent has worked alone. Now you'll let multiple agents collaborate, each with its own tools and expertise, using [Agent2Agent (A2A)](https://strandsagents.com/).
 
 You'll build a three-agent D&D system orchestrated by a central Game Master.
 
@@ -24,721 +24,344 @@ You'll build a three-agent D&D system orchestrated by a central Game Master.
                         (port 8009)
 ```
 
-| Agent                       | Role                                      | File                             |
-| --------------------------- | ----------------------------------------- | -------------------------------- |
-| **Rules Agent**             | D&D rules lookup, backed by a vector DB   | `src/rules_agent.ts`             |
-| **Character Agent**         | Character creation and persistent storage | `src/character_agent.ts`         |
-| **Gamemaster Orchestrator** | Routes requests, calls dice MCP, narrates | `src/gamemaster_orchestrator.ts` |
+| Component                   | Role                                            | File                              |
+| --------------------------- | ----------------------------------------------- | --------------------------------- |
+| **Rules Agent**             | D&D rules lookup from a small local dataset     | `src/rules-agent.ts`              |
+| **Character Agent**         | Character creation and JSON-file storage        | `src/character-agent.ts`          |
+| **Gamemaster Orchestrator** | Routes to specialists + dice MCP, narrates      | `src/gamemaster-orchestrator.ts`  |
+
+Two things are shared across agents and worth noting up front:
+
+- Every agent gets its model from **`createModel()`** (`src/model.ts`) — local Ollama by default, Bedrock when `MODEL_PROVIDER=bedrock`.
+- The A2A protocol is served by **`A2AExpressServer`** and consumed by **`A2AAgent`**, both from the current Strands SDK.
 
 ---
 
 ## Part 1 — The Rules Agent
 
-The Rules Agent looks up D&D rules from a local vector database. Before it can answer anything, you need to build the **knowledge base**.
+The Rules Agent answers mechanics questions. To keep the workshop runnable with **zero downloads or vector databases**, it looks rules up in a small local dataset.
 
-### Build the knowledge base
+### Step 1 — The local rules dataset (`src/local-rules.ts`)
 
-1. Download the [D&D Basic Rules 2018 PDF](https://media.wizards.com/2018/dnd/downloads/DnD_BasicRules_2018.pdf). The file must be named `DnD_BasicRules_2018.pdf`.
-2. Place it in `src/dnd-knowledge-base`
-3. Create a file called `create_knowledge_base.ts`.
-4. Install the LanceDB and Transformers `npm install pdf-parse @a2a-js/sdk @lancedb/lancedb @huggingface/transformers`
-5. Paste the following:
+A handful of keyword-tagged, page-referenced snippets and a tiny scorer:
 
-```ts
-/**
- * D&D Basic Rules Knowledge Base Creator
- * Creates a LanceDB vector knowledge base from the D&D Basic Rules PDF
- * Uses all-MiniLM-L6-v2 for local embeddings (same model as ChromaDB's default)
- */
-
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
-import {
-  pipeline,
-  type FeatureExtractionPipeline,
-} from "@huggingface/transformers";
-import * as lancedb from "@lancedb/lancedb";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-interface KBChunk {
-  id: string;
-  text: string;
+```typescript
+export interface Rule {
+  topic: string;
   page: number;
-  paragraph: number;
-  source: string;
+  text: string;
+  keywords: string[];
 }
 
-interface LanceRecord extends KBChunk {
-  vector: number[];
-}
+export const RULES: Rule[] = [
+  {
+    topic: "Ability Checks",
+    page: 58,
+    text: "Roll a d20 and add the relevant ability modifier; compare to the DC.",
+    keywords: ["ability", "check", "dexterity", "strength", "dc", "d20"],
+  },
+  // ...saving throws, attack rolls, advantage/disadvantage, initiative,
+  //    4d6-drop-lowest ability generation
+];
 
-async function createEmbedder(): Promise<FeatureExtractionPipeline> {
-  console.log("Loading embedding model (all-MiniLM-L6-v2)...");
-  const pipelineFn = pipeline as (
-    ...args: unknown[]
-  ) => Promise<FeatureExtractionPipeline>;
-  const extractor = await pipelineFn(
-    "feature-extraction",
-    "Xenova/all-MiniLM-L6-v2",
-  );
-  console.log("Embedding model loaded");
-  return extractor;
-}
-
-async function embedTexts(
-  extractor: FeatureExtractionPipeline,
-  texts: string[],
-): Promise<number[][]> {
-  const vectors: number[][] = [];
-  for (const text of texts) {
-    const output = await extractor(text, { pooling: "mean", normalize: true });
-    vectors.push(Array.from(output.data as Float32Array));
-  }
-  return vectors;
-}
-
-async function extractTextFromPdf(pdfPath: string): Promise<KBChunk[]> {
-  const chunks: KBChunk[] = [];
-
-  try {
-    const { PDFParse } = await import("pdf-parse");
-    const dataBuffer = fs.readFileSync(pdfPath);
-    const data = new Uint8Array(dataBuffer);
-    const parser = new PDFParse({ data });
-    const result = await parser.getText();
-
-    for (const page of result.pages) {
-      const pageNum = page.num;
-      if (!page.text.trim()) continue;
-
-      const paragraphs = page.text.split("\n\n");
-
-      for (let paraIdx = 0; paraIdx < paragraphs.length; paraIdx++) {
-        const paragraph = paragraphs[paraIdx].trim();
-        if (paragraph.length > 50) {
-          chunks.push({
-            id: `page_${pageNum}_para_${paraIdx}`,
-            text: paragraph,
-            page: pageNum,
-            paragraph: paraIdx,
-            source: "DnD_BasicRules_2018.pdf",
-          });
-        }
-      }
+export function lookupRule(query: string): Rule | null {
+  const words = query.toLowerCase().split(/\W+/).filter(Boolean);
+  let best: Rule | null = null;
+  let bestScore = 0;
+  for (const rule of RULES) {
+    const score = rule.keywords.reduce(
+      (acc, kw) => acc + (words.includes(kw) ? 1 : 0),
+      0,
+    );
+    if (score > bestScore) {
+      bestScore = score;
+      best = rule;
     }
-  } catch (e) {
-    console.error(`Error reading PDF: ${e}`);
-    return [];
   }
-
-  return chunks;
+  return bestScore > 0 ? best : null;
 }
-
-async function createKnowledgeBase(pdfPath: string, dbPath: string) {
-  console.log("Extracting text from PDF...");
-  const chunks = await extractTextFromPdf(pdfPath);
-
-  if (chunks.length === 0) {
-    console.log("No text chunks extracted from PDF");
-    return;
-  }
-
-  console.log(`Extracted ${chunks.length} text chunks`);
-
-  const extractor = await createEmbedder();
-
-  console.log("Generating embeddings and storing in LanceDB...");
-  const db = await lancedb.connect(dbPath);
-
-  const batchSize = 50;
-  const allRecords: LanceRecord[] = [];
-
-  for (let i = 0; i < chunks.length; i += batchSize) {
-    const batch = chunks.slice(i, i + batchSize);
-    const texts = batch.map((c) => c.text);
-    const vectors = await embedTexts(extractor, texts);
-
-    for (let j = 0; j < batch.length; j++) {
-      allRecords.push({ ...batch[j], vector: vectors[j] });
-    }
-
-    const batchNum = Math.floor(i / batchSize) + 1;
-    const totalBatches = Math.ceil(chunks.length / batchSize);
-    console.log(`Embedded batch ${batchNum}/${totalBatches}`);
-  }
-
-  await db.createTable(
-    "dnd_basic_rules",
-    allRecords as unknown as Record<string, unknown>[],
-    { mode: "overwrite" },
-  );
-
-  console.log(`Knowledge base created successfully at: ${dbPath}`);
-  console.log(`Total documents: ${allRecords.length}`);
-}
-
-// Main
-const pdfFile = path.join(__dirname, "DnD_BasicRules_2018.pdf");
-
-if (!fs.existsSync(pdfFile)) {
-  console.log(`PDF file '${pdfFile}' not found!`);
-  console.log("Please place DnD_BasicRules_2018.pdf in the utils/ directory.");
-  process.exit(1);
-}
-
-const outputPath = path.join(__dirname, "dnd_knowledge_base");
-await createKnowledgeBase(pdfFile, outputPath);
-console.log("Knowledge base creation complete!");
 ```
 
-5. Run the indexer:
+> **RAG is optional.** The Rules Agent only depends on the `lookupRule(query)` signature, not on where the data comes from. If you want real retrieval later, swap the body of `lookupRule` for a vector search (e.g. LanceDB + local embeddings) — nothing else has to change.
 
-   ```bash
-   npx tsx src/dnd-knowledge-base/create-knowledge-base.ts
-   ```
-
-This script extracts text from the PDF, generates embeddings using the local `all-MiniLM-L6-v2` model (~80 MB, downloaded automatically on first run), and writes a LanceDB vector database to `src/dnd_knowledge_base/`. No external services or API keys needed.
-
-When complete, you'll see `Knowledge base creation complete!` and a `dnd_basic_rules.lance` file inside the output folder.
-
-### Wire up the agent
-
-In `rules_agent.ts`:
+### Step 2 — Serve the agent over A2A (`src/rules-agent.ts`)
 
 ```typescript
 import { Agent, tool } from "@strands-agents/sdk";
-import { BedrockModel } from "@strands-agents/sdk/models/bedrock";
 import { A2AExpressServer } from "@strands-agents/sdk/a2a/express";
-import z from "zod";
-import * as path from "path";
-import { fileURLToPath } from "url";
-import {
-  pipeline,
-  type FeatureExtractionPipeline,
-} from "@huggingface/transformers";
-import * as lancedb from "@lancedb/lancedb";
-import type { Table } from "@lancedb/lancedb";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-class RulesKnowledgeBase {
-  private dbPath: string;
-  private table: Table | null = null;
-  private extractor: FeatureExtractionPipeline | null = null;
-
-  constructor() {
-    const chapterRoot = path.resolve(__dirname, "..", "..");
-    this.dbPath = path.join(chapterRoot, "utils", "dnd_knowledge_base");
-    console.log(`KB path: ${this.dbPath}`);
-  }
-
-  private async init(): Promise<Table | null> {
-    if (this.table) return this.table;
-    try {
-      console.log("Loading embedding model...");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pipelineFn = pipeline as (
-        ...args: unknown[]
-      ) => Promise<FeatureExtractionPipeline>;
-      this.extractor = await pipelineFn(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2",
-      );
-      console.log("Connecting to LanceDB...");
-      const db = await lancedb.connect(this.dbPath);
-      this.table = await db.openTable("dnd_basic_rules");
-      console.log("Knowledge base ready");
-      return this.table;
-    } catch (e) {
-      console.error(`Error connecting to KB: ${e}`);
-      return null;
-    }
-  }
-
-  async quickQuery(query: string): Promise<string> {
-    console.log(`Querying KB with: ${query}`);
-    const table = await this.init();
-    if (!table || !this.extractor) return "KB unavailable";
-
-    try {
-      const output = await this.extractor(query, {
-        pooling: "mean",
-        normalize: true,
-      });
-      const queryVec = Array.from(output.data as Float32Array);
-      const results = await table.vectorSearch(queryVec).limit(1).toArray();
-
-      if (results.length > 0) {
-        const doc = results[0] as { text: string; page: number };
-        return `Page ${doc.page}: ${doc.text.slice(0, 100)}...`;
-      }
-      return "No rules found";
-    } catch {
-      return "KB error";
-    }
-  }
-}
-
-const rulesKb = new RulesKnowledgeBase();
+import { z } from "zod";
+import { createModel } from "./model.js";
+import { lookupRule } from "./local-rules.js";
 
 const queryDndRules = tool({
   name: "query_dnd_rules",
-  description: "Fast D&D rule lookup. Returns brief rule with page reference.",
+  description: "Fast D&D 5e rule lookup. Returns a brief rule with a page reference.",
   inputSchema: z.object({
-    query: z.string().describe("The D&D rule query to look up"),
+    query: z.string().describe("The D&D rule to look up, e.g. 'dexterity check'"),
   }),
-  callback: async (input) => {
-    return rulesKb.quickQuery(input.query);
+  callback: (input) => {
+    const rule = lookupRule(input.query);
+    if (!rule) return "No matching rule found in the Basic Rules.";
+    return `${rule.topic} (p.${rule.page}): ${rule.text}`;
   },
 });
 
-const DESCRIPTION = `Specialized D&D 5e rules lookup agent that provides fast, authoritative rule clarifications from the Basic Rules.
-Queries the LanceDB knowledge base containing indexed D&D content and returns brief, page-referenced rule explanations.
-Designed for quick consultation by other agents or players during gameplay.`;
-
-const SYSTEM_PROMPT = `You are a D&D rules expert. When asked about rules, use the query_dnd_rules tool once to find the relevant rule,
-then provide a clear, concise answer with the page reference. Keep responses brief and focused on the specific rule requested.`;
-
 const agent = new Agent({
-  model: new BedrockModel({
-    modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0",
-  }),
+  model: createModel(),
   tools: [queryDndRules],
-  systemPrompt: SYSTEM_PROMPT,
+  systemPrompt: `You are a D&D rules expert. Call query_dnd_rules once, then answer
+    concisely, always citing the page reference the tool returns.`,
 });
 
 const server = new A2AExpressServer({
   agent,
   name: "Rules Agent",
-  description: DESCRIPTION,
+  description: "Specialized D&D 5e rules-lookup agent with page-referenced answers.",
   port: 8000,
 });
 
 await server.serve();
+console.log("🧙 Rules Agent running on http://127.0.0.1:8000");
 ```
 
-`A2AExpressServer` wraps the agent in an A2A-compatible HTTP server. See the [A2A docs](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/multi-agent/agent-to-agent/#creating-an-a2a-server).
+`A2AExpressServer` wraps the agent in an A2A-compatible HTTP server and publishes its agent card at `/.well-known/agent-card.json`.
 
 ---
 
 ## Part 2 — The Character Agent
 
-The Character Agent uses three tools to manage heroes (already implemented in the source repo — read them carefully, they're a great pattern to copy):
+The Character Agent manages heroes with three tools:
 
-- `create_character` — generates a new character with stats and inventory
-- `find_character_by_name` — searches by name
-- `list_all_characters` — returns the full roster
+- `create_character` — persists a new character (you roll its stats first)
+- `find_character_by_name` — case-insensitive lookup
+- `list_all_characters` — the full roster
 
-Storage is just `characters.json` next to the agent file.
+Storage is a plain `characters.json` written next to the agent. To keep files small and each concern in one place, the storage lives in its own module.
 
-In `src/character_agent.ts`:
+### Step 1 — Storage (`src/character-store.ts`)
+
+```typescript
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DB_PATH = path.join(__dirname, "characters.json");
+
+export interface Stats {
+  strength: number; dexterity: number; constitution: number;
+  intelligence: number; wisdom: number; charisma: number;
+}
+export interface Character {
+  character_id: string; name: string; character_class: string; race: string;
+  gender: string; level: number; experience: number; stats: Stats;
+  inventory: { item_name: string; quantity: number }[]; created_at: string;
+}
+
+// readDB / writeDB (JSON file), plus:
+export function listCharacters(): Character[] { /* ... */ return []; }
+export function findCharacter(name: string): Character | undefined { /* ... */ return undefined; }
+export function saveCharacter(input: {
+  name: string; character_class: string; race: string; gender: string; stats: Stats;
+}): Character { /* build with level 1, starter inventory, persist, return */ return {} as Character; }
+```
+
+> The full storage module is `src/character-store.ts` in this repo — copy it as-is; it's a clean pattern for file-backed tool state.
+
+### Step 2 — The agent (`src/character-agent.ts`)
 
 ```typescript
 import { Agent, tool } from "@strands-agents/sdk";
-import { BedrockModel } from "@strands-agents/sdk/models/bedrock";
 import { A2AExpressServer } from "@strands-agents/sdk/a2a/express";
-import z from "zod";
-import * as fs from "fs";
-import * as path from "path";
-import { fileURLToPath } from "url";
-import { randomUUID } from "crypto";
+import { z } from "zod";
+import { createModel } from "./model.js";
+import { findCharacter, listCharacters, saveCharacter } from "./character-store.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-interface Stats {
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
-}
-
-interface InventoryItem {
-  item_name: string;
-  quantity: number;
-}
-
-interface Character {
-  character_id: string;
-  name: string;
-  character_class: string;
-  race: string;
-  gender: string;
-  level: number;
-  experience: number;
-  stats: Stats;
-  inventory: InventoryItem[];
-  created_at: string;
-}
-
-interface CharactersDB {
-  _default: Record<string, Character>;
-}
-
-const DB_PATH = path.join(__dirname, "characters.json");
-
-function readDB(): CharactersDB {
-  if (!fs.existsSync(DB_PATH)) {
-    return { _default: {} };
-  }
-  return JSON.parse(fs.readFileSync(DB_PATH, "utf-8")) as CharactersDB;
-}
-
-function writeDB(db: CharactersDB): void {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-}
-
-const findCharacterByName = tool({
-  name: "find_character_by_name",
-  description: "Find a character by name",
-  inputSchema: z.object({
-    name: z.string().describe("The character's name to search for"),
-  }),
-  callback: (input) => {
-    console.log(`🔍 Searching for character with name: '${input.name}'`);
-    const db = readDB();
-    const entries = Object.values(db._default);
-    const found = entries.find((c) => c.name === input.name);
-
-    if (!found) {
-      console.log(`❌ Character with name '${input.name}' not found`);
-      return `❌ Character with name '${input.name}' not found`;
-    }
-
-    console.log(
-      `✅ Found character: ${found.name} (ID: ${found.character_id}, ${found.character_class} ${found.race})`,
-    );
-    return JSON.stringify(found);
-  },
-});
-
-const listAllCharacters = tool({
-  name: "list_all_characters",
-  description: "List all characters in the database",
-  inputSchema: z.object({}),
-  callback: () => {
-    console.log("📋 Listing all characters in database");
-    const db = readDB();
-    const allChars = Object.values(db._default);
-
-    if (allChars.length === 0) {
-      console.log("❌ No characters found in database");
-      return "📜 No characters found in the database";
-    }
-
-    console.log(`✅ Found ${allChars.length} character(s) in database`);
-    for (const char of allChars) {
-      console.log(`  - ${char.name} (${char.character_class} ${char.race})`);
-    }
-    return JSON.stringify(allChars);
-  },
+const statsSchema = z.object({
+  strength: z.number(), dexterity: z.number(), constitution: z.number(),
+  intelligence: z.number(), wisdom: z.number(), charisma: z.number(),
 });
 
 const createCharacter = tool({
   name: "create_character",
-  description: `Character details respecting the GameCharacters object fields.
-Roll a dice to generate the stats (ability scores).
-When rolling ability scores, remember the traditional method: roll 4d6, drop the lowest die.`,
+  description: "Create a character. Roll ability scores with 4d6-drop-lowest first.",
   inputSchema: z.object({
-    name: z.string().describe("Character's name"),
-    character_class: z.string().describe("D&D class (Fighter, Wizard, etc.)"),
-    race: z.string().describe("D&D race (Human, Elf, etc.)"),
-    gender: z.string().describe("Character's gender"),
-    stats_dict: z
-      .object({
-        strength: z.number(),
-        dexterity: z.number(),
-        constitution: z.number(),
-        intelligence: z.number(),
-        wisdom: z.number(),
-        charisma: z.number(),
-      })
-      .describe(
-        "Dictionary with strength, dexterity, constitution, intelligence, wisdom, charisma",
-      ),
+    name: z.string(),
+    character_class: z.string().describe("Fighter, Wizard, etc."),
+    race: z.string().describe("Human, Elf, etc."),
+    gender: z.string(),
+    stats: statsSchema,
   }),
-  callback: (input) => {
-    const characterId = randomUUID();
-    console.log(characterId);
-
-    const stats: Stats = {
-      strength: input.stats_dict.strength ?? 10,
-      dexterity: input.stats_dict.dexterity ?? 10,
-      constitution: input.stats_dict.constitution ?? 10,
-      intelligence: input.stats_dict.intelligence ?? 10,
-      wisdom: input.stats_dict.wisdom ?? 10,
-      charisma: input.stats_dict.charisma ?? 10,
-    };
-    console.log(stats);
-
-    const character: Character = {
-      character_id: characterId,
-      name: input.name,
-      character_class: input.character_class,
-      race: input.race,
-      gender: input.gender,
-      level: 1,
-      experience: 0,
-      stats,
-      inventory: [
-        { item_name: "Starting Equipment Pack", quantity: 1 },
-        { item_name: "Gold Pieces", quantity: 100 },
-      ],
-      created_at: new Date().toISOString(),
-    };
-    console.log(character);
-
-    const db = readDB();
-    const nextKey = String(Object.keys(db._default).length + 1);
-    db._default[nextKey] = character;
-    writeDB(db);
-    console.log("Inserted");
-
-    return JSON.stringify(character);
-  },
+  callback: (input) => JSON.stringify(saveCharacter(input)),
 });
 
-const DESCRIPTION = `Specialized D&D character management agent that handles character creation, storage, and retrieval.
-Creates new characters with proper ability score generation (4d6 drop lowest), manages character data in persistent storage,
-and provides character lookup services. Maintains complete character profiles including stats, inventory, and progression data for D&D campaigns.`;
-
-const SYSTEM_PROMPT = `You are a D&D character management specialist. When creating characters, always roll ability scores using the traditional
-method: roll 4d6 and drop the lowest die for each of the six abilities (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma).
-Use the appropriate tools to create, find, or list characters as requested. Provide clear confirmations when characters are created and
-helpful summaries when characters are found. Keep responses focused and include relevant character details like class, race, and key stats.`;
+// find_character_by_name and list_all_characters follow the same shape.
 
 const agent = new Agent({
-  // TODO: Configure the Character Agent with:
-  model: new BedrockModel({
-    modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0",
-  }),
-  tools: [findCharacterByName, listAllCharacters, createCharacter],
-  // - systemPrompt: SYSTEM_PROMPT
-  systemPrompt: SYSTEM_PROMPT,
+  model: createModel(),
+  tools: [/* findCharacterByName, listAllCharacters, */ createCharacter],
+  systemPrompt: `You are a D&D character-management specialist. Roll ability scores with
+    4d6 drop lowest, then use the tools to create, find, or list characters.`,
 });
 
 const server = new A2AExpressServer({
   agent,
   name: "Character Creator Agent",
-  description: DESCRIPTION,
+  description: "Creates, stores, and looks up D&D characters.",
   port: 8001,
 });
 
 await server.serve();
+console.log("⚔️  Character Agent running on http://127.0.0.1:8001");
 ```
 
 ---
 
 ## Part 3 — The Gamemaster Orchestrator
 
-The orchestrator is itself a Strands agent. It connects to:
+The orchestrator is itself a Strands agent that mixes **three** tool sources:
 
-- The dice MCP server from Chapter 4 (via `McpClient`)
-- The Rules Agent and Character Agent (via A2A clients wrapped as tools)
+- the two specialists, reached via `A2AAgent` and wrapped as `tool()`s
+- the dice MCP server from Chapter 4, passed in **directly** as an `McpClient`
+
+It also produces **typed structured output**. Instead of asking the model for JSON and then parsing/regex-stripping it, we give the agent a Zod schema. The SDK validates the model's output against it and returns a typed object on `result.structuredOutput` — **no JSON parsing and no markdown-fence stripping**.
+
+### Step 1 — The output schema (`src/game-master-schema.ts`)
+
+```typescript
+import { z } from "zod";
+
+export const gameMasterSchema = z.object({
+  response: z.string().describe("The narrative response, in the Game Master's voice"),
+  action_suggestions: z.array(z.string()).describe("A few next actions the player could take"),
+  details: z.string().describe("Brief summary of which tools or agents were used"),
+  dice_rolls: z.array(z.object({
+    dice_type: z.string().describe("The die used, e.g. 'd20'"),
+    result: z.number().describe("The rolled total"),
+    reason: z.string().describe("Why the roll was made"),
+  })),
+});
+
+export type GameMasterResponse = z.infer<typeof gameMasterSchema>;
+```
+
+### Step 2 — The orchestrator (`src/gamemaster-orchestrator.ts`)
 
 ```typescript
 import { Agent, McpClient, tool } from "@strands-agents/sdk";
-import { BedrockModel } from "@strands-agents/sdk/models/bedrock";
 import { A2AAgent } from "@strands-agents/sdk/a2a";
-import express from "express";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import z from "zod";
-
-const app = express();
-app.use(express.json());
-
-app.get("/health", (_req, res) => {
-  res.json({ status: "healthy" });
-});
-
-// Connect to the MCP server at http://localhost:8080/mcp
-const mcpClient = new McpClient({
-  transport: new StreamableHTTPClientTransport(
-    new URL("http://localhost:8080/mcp"),
-  ),
-});
-
-// System prompt for the agent
-const SYSTEM_PROMPT = `You are a D&D Game Master orchestrator with access to specialized agents and tools.
-
-Available agents:
-- Rules Agent (http://127.0.0.1:8000) - For D&D mechanics and rules
-- Character Agent (http://127.0.0.1:8001) - For character creation and management
-
-To communicate with agents, use the A2A protocol.
-
-Available D&D dice types:
-- d4 (4-sided die) - Used for damage rolls of small weapons like daggers
-- d6 (6-sided die) - Used for damage rolls of weapons like shortswords, spell damage
-- d8 (8-sided die) - Used for damage rolls of weapons like longswords, rapiers
-- d10 (10-sided die) - Used for damage rolls of heavy weapons, percentile rolls
-- d12 (12-sided die) - Used for damage rolls of great weapons like greataxes
-- d20 (20-sided die) - Used for ability checks, attack rolls, saving throws
-- d100 (percentile die) - Used for random tables, wild magic surges
-
-When you reply, please reply with a JSON (and ONLY A JSON, no text other than the json).
-Always respond in JSON format:
-{
-    "response": "Your narrative response as Game Master",
-    "actions_suggestions": ["Action 1", "Action 2", "Action 3"],
-    "details": "Brief summary of tools/agents used",
-    "dices_rolls": [{"dice_type": "d20", "result": 15, "reason": "attack roll"}]
-}
-
-Be creative, engaging, and use your available tools to enhance the D&D experience.
-
-Remember, the response should ONLY be a PURE json with no markdown or text around it.
-`;
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import express from "express";
+import { z } from "zod";
+import { createModel } from "./model.js";
+import { gameMasterSchema, type GameMasterResponse } from "./game-master-schema.js";
 
 const rulesAgent = new A2AAgent({ url: "http://127.0.0.1:8000" });
 const characterAgent = new A2AAgent({ url: "http://127.0.0.1:8001" });
 
 const askRulesAgent = tool({
   name: "ask_rules_agent",
-  description: "Ask the Rules Agent about D&D mechanics and rules",
-  inputSchema: z.object({
-    question: z.string().describe("The D&D rules question to ask"),
-  }),
-  callback: async (input) => {
-    const result = await rulesAgent.invoke(input.question);
-    return String(result);
-  },
+  description: "Ask the Rules Agent about D&D mechanics and rules.",
+  inputSchema: z.object({ question: z.string().describe("The rules question") }),
+  callback: async (input) => (await rulesAgent.invoke(input.question)).toString(),
+});
+// askCharacterAgent follows the same shape.
+
+const diceMcp = new McpClient({
+  transport: new StreamableHTTPClientTransport(
+    new URL("http://localhost:8080/mcp"),
+  ) as Transport,
 });
 
-const askCharacterAgent = tool({
-  name: "ask_character_agent",
-  description: "Ask the Character Agent about available characters",
-  inputSchema: z.object({
-    question: z.string().describe("The D&D rules characters to ask"),
-  }),
-  callback: async (input) => {
-    const result = await characterAgent.invoke(input.question);
-    return String(result);
-  },
-});
-
-const agent = new Agent({
-  model: new BedrockModel({
-    modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0",
-  }),
-  tools: [askRulesAgent, askCharacterAgent, mcpClient],
-  systemPrompt: SYSTEM_PROMPT,
-});
-
-app.get("/user/:name", async (req, res) => {
-  const { name } = req.params;
-  console.log(`Looking up character: ${name}`);
-  try {
-    const result = await characterAgent.invoke(
-      `Find the character named "${name}" and return ONLY the raw JSON data from the find_character_by_name tool, nothing else.`,
-    );
-    const text = String(result);
-    // Extract JSON from the response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      res.json(JSON.parse(jsonMatch[0]));
-    } else {
-      res.status(404).json({ error: "Character not found" });
-    }
-  } catch (e) {
-    console.error(`Error fetching character: ${e}`);
-    res.status(500).json({ error: "Failed to fetch character" });
-  }
-});
-
-app.post("/inquire", async (req, res) => {
-  console.log("Processing request...");
-  try {
-    const { question } = req.body as { question: string };
-
-    // TODO: Process the request using the gamemaster agent
-    const response = await agent.invoke(question);
-    const content = String(response);
-
-    res.json({ response: content });
-  } catch (e) {
-    console.error(`Error occurred: ${e}`);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-const PORT = 8009;
-app.listen(PORT, () => {
-  console.log(`🏰 D&D Game Master API running on http://localhost:${PORT}`);
+const gamemaster = new Agent({
+  model: createModel(),
+  tools: [askRulesAgent, /* askCharacterAgent, */ diceMcp],
+  systemPrompt: `You are a D&D Game Master orchestrating specialists and tools.
+    Use ask_rules_agent for rules, ask_character_agent for characters, and roll_dice
+    for every roll. Populate dice_rolls and action_suggestions in your answer.`,
+  structuredOutputSchema: gameMasterSchema, // ← typed, validated output
 });
 ```
 
-The orchestrator then exposes a thin Express API on port 8009 (`POST /inquire`, `GET /user/:name`, `GET /health`) that the rest of the world can call.
+### Step 3 — A thin Express API on port 8009
 
-See the [A2A "as a tool" pattern](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/multi-agent/agent-to-agent/#as-a-tool).
+```typescript
+const app = express();
+app.use(express.json());
+
+app.get("/health", (_req, res) => res.json({ status: "healthy" }));
+
+app.post("/inquire", async (req, res) => {
+  const { question } = req.body as { question?: string };
+  if (!question) return void res.status(400).json({ error: "Missing 'question'" });
+  const result = await gamemaster.invoke(question);
+  // Already typed and validated — no JSON.parse, no fence stripping.
+  const structured = result.structuredOutput as GameMasterResponse | undefined;
+  res.json(structured ?? { response: result.toString(), action_suggestions: [], details: "", dice_rolls: [] });
+});
+
+app.listen(8009, () => console.log("🏰 D&D Game Master API running on http://localhost:8009"));
+```
 
 ---
 
 ## Running the full fellowship
 
-You'll need **four terminals**:
+You'll need **four terminals**, all from the project root. Start Ollama first (or set `MODEL_PROVIDER=bedrock`):
 
 ```bash
-# Terminal 1 — Dice MCP server (Chapter 4)
-npx tsx mcp-server/server.ts
+# Terminal 1 — Dice MCP server (from Chapter 4)
+npm run mcp:server
 
 # Terminal 2 — Rules Agent
-npx tsx src/rules_agent.ts
+npm run agent:rules
 
 # Terminal 3 — Character Agent
-npx tsx src/character-agent.ts
+npm run agent:characters
 
 # Terminal 4 — Gamemaster Orchestrator
-npx tsx src/gamemaster_orchestrator.ts
+npm run game-master
 ```
 
 ## Try it
 
-You can curl to see the impact directly:
-
 ```bash
 # Rules question
-curl -X POST http://0.0.0.0:8009/inquire \
+curl -X POST http://127.0.0.1:8009/inquire \
   -H "Content-Type: application/json" \
   -d '{"question": "What are the rules for dexterity checks?"}'
 
 # Create a character
-curl -X POST http://0.0.0.0:8009/inquire \
+curl -X POST http://127.0.0.1:8009/inquire \
   -H "Content-Type: application/json" \
-  -d '{"question": "Create a character named Thorin, a Dwarf Fighter with strength 16, dexterity 12, constitution 15"}'
-
-# Look up that character
-curl -X POST http://0.0.0.0:8009/inquire \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is Thorin'\''s constitution?"}'
+  -d '{"question": "Create a character named Thorin, a Dwarf Fighter"}'
 
 # Roll a d20
-curl -X POST http://0.0.0.0:8009/inquire \
+curl -X POST http://127.0.0.1:8009/inquire \
   -H "Content-Type: application/json" \
   -d '{"question": "Roll a d20 for initiative!"}'
 ```
+
+Each response is the validated `gameMasterSchema` object: a `response`, `action_suggestions`, `details`, and a `dice_rolls` array.
 
 ## What's happening under the hood
 
 1. The orchestrator receives your question
 2. It picks the right tool: `ask_rules_agent`, `ask_character_agent`, or the MCP `roll_dice`
-3. The downstream agent does its work and replies
-4. The orchestrator weaves the results back into a single narrative response
+3. The downstream agent (or MCP server) does its work and replies
+4. The SDK validates the orchestrator's final answer against `gameMasterSchema` and returns it as a typed object
 
-This is the same pattern used in production multi-agent systems: a coordinator agent routes work to specialists.
+This is the pattern behind production multi-agent systems: a coordinator routes work to specialists and returns a strongly-typed result.
 
 ## What you learned
 
-- How `A2AExpressServer` exposes a Strands agent over HTTP
-- How `A2AAgent` connects to a remote agent and how `tool()` wraps it as a callable tool
-- How an orchestrator can mix MCP tools and A2A tools in one `Agent`
-- How vector search (LanceDB + local embeddings) gives an agent grounded knowledge
+- How `A2AExpressServer` exposes a Strands agent over HTTP, and `A2AAgent` consumes it
+- How `tool()` wraps a remote `A2AAgent` as a callable tool
+- How one `Agent` can mix A2A tools and an MCP client in a single `tools` array
+- How `structuredOutputSchema` gives you typed, validated output with **no JSON parsing or fence stripping**
+- Why a small local dataset keeps the workshop runnable, with RAG as an optional upgrade
 
 ---
 
