@@ -270,6 +270,7 @@ const createCharacter = tool({
   }),
   callback: (input) => JSON.stringify(saveCharacter(input)),
 });
+```
 
 The other two tools follow the same shape — a schema, and a callback that returns a
 string:
