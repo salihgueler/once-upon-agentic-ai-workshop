@@ -31,8 +31,8 @@ Transformers.js — there is no cloud call, no API key, and no cost.
 | :-- | :-- |
 | `knowledge/dnd_knowledge_base/` | **Pre-built LanceDB vector store** (1,251 passages) — committed, so there is no ingestion step |
 | `knowledge/DnD_BasicRules_2018.pdf` | The source rulebook, only needed if you re-index |
-| `src/rules-knowledge-base.ts` | Provided retrieval module — embeds a query and runs the vector search |
-| `src/build-knowledge-base.ts` | Provided ingestion script, for re-indexing |
+| `knowledge/rules-knowledge-base.ts` | Provided retrieval module — embeds a query and runs the vector search |
+| `knowledge/build-knowledge-base.ts` | Provided ingestion script, for re-indexing |
 
 The two new dependencies are already pinned in `package.json`:
 
@@ -41,7 +41,7 @@ The two new dependencies are already pinned in `package.json`:
 "@lancedb/lancedb": "0.27.2"
 ```
 
-> **Create:** none — you **modify** `src/rules-agent.ts`<br>
+> **Copy:** `knowledge/rules-knowledge-base.ts` into `src/`, then **modify** `src/rules-agent.ts`<br>
 > **Reference after attempting the exercise:** [`completed/09-rag-rules/src/rules-agent.ts`](../completed/09-rag-rules/src/rules-agent.ts)
 
 ## How the retrieval works
@@ -56,8 +56,8 @@ is exactly what keyword scoring cannot do.
 **2. A vector database finds nearest neighbours.** LanceDB stores each passage with its
 vector and answers "which rows are closest to this query vector?" quickly.
 
-`src/rules-knowledge-base.ts` wires those together and exposes one function with the
-same contract as the keyword lookup — a page-referenced string, or `null`:
+`knowledge/rules-knowledge-base.ts` wires those together and exposes one function with
+the same contract as the keyword lookup — a page-referenced string, or `null`:
 
 ```typescript
 export async function lookupRuleSemantic(query: string): Promise<string | null>;
@@ -65,7 +65,19 @@ export async function lookupRuleSemantic(query: string): Promise<string | null>;
 
 The model loads once on the first query (a few seconds) and stays warm afterwards.
 
-## Step 1 — Point the tool at semantic retrieval
+## Step 1 — Copy the retrieval module into your source tree
+
+The module ships in `knowledge/` so the starter `src/` stays empty apart from
+`model.ts`. Copy it in alongside the agents you built:
+
+```bash
+cp knowledge/rules-knowledge-base.ts src/
+```
+
+It resolves the store from the repository root, so it works unchanged in `src/` as long
+as you run npm scripts from the project root.
+
+## Step 2 — Point the tool at semantic retrieval
 
 Open `src/rules-agent.ts`. Replace the keyword import:
 
@@ -97,7 +109,7 @@ is the point of having built against a seam.
 `src/local-rules.ts` is now unused by the agent. Leave it in place so you can switch
 back and compare the two strategies.
 
-## Step 2 — Run it
+## Step 3 — Run it
 
 Start the Rules Agent on its own first:
 
@@ -134,7 +146,7 @@ Good queries to contrast the two approaches:
 | `How does grappling work?` | No match | Retrieves the grappling rules |
 | `What happens when I drop to 0 hit points?` | Wrong match — scores "Attack Rolls" on the word "roll" | Retrieves the relevant passage |
 
-## Step 3 — Optional: re-index the rulebook
+## Step 4 — Optional: re-index the rulebook
 
 You do not need this — the store is committed. Run it only to re-index, or to point the
 pipeline at your own material:
@@ -148,7 +160,7 @@ It extracts text from the PDF, strips the repeated page furniture, packs sentenc
 this takes a few minutes and downloads the ~23MB embedding model on first run.
 
 To index your own source, drop a PDF in `knowledge/`, update `PDF_PATH` in
-`src/build-knowledge-base.ts`, and re-run. Nothing else changes — the agent does not
+`knowledge/build-knowledge-base.ts`, and re-run. Nothing else changes — the agent does not
 know or care where the passages came from.
 
 ## Retrieval quality is a design choice, not a given

@@ -9,7 +9,6 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   pipeline,
   type FeatureExtractionPipeline,
@@ -17,10 +16,8 @@ import {
 import * as lancedb from "@lancedb/lancedb";
 import { EMBEDDING_MODEL, KB_PATH, KB_TABLE } from "./rules-knowledge-base.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PDF_PATH = path.resolve(
-  __dirname,
-  "..",
+  process.cwd(),
   "knowledge",
   "DnD_BasicRules_2018.pdf",
 );

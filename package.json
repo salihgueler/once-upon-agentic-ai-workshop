@@ -25,7 +25,8 @@
     "build:all": "npm run build && npm run web:build",
     "type-check": "tsc --noEmit",
     "completed:type-check": "tsc -p completed/tsconfig.json",
-    "kb:build": "tsx src/build-knowledge-base.ts"
+    "kb:build": "tsx knowledge/build-knowledge-base.ts",
+    "kb:type-check": "tsc -p knowledge/tsconfig.json"
   },
   "keywords": [
     "strands",

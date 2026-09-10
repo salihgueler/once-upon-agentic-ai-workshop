@@ -76,7 +76,7 @@ once-upon-agentic-ai-workshop/
 │   ├── 05-a2a-integration/
 │   └── final/                # complete backend reference
 ├── chapters/
-├── knowledge/                # pre-built vector store + source PDF (Chapter 9)
+├── knowledge/                # pre-built vector store, PDF, RAG modules (Chapter 9)
 ├── agentcore/                # optional agents-only deployment after Chapter 5
 ├── package.json
 └── package-lock.json

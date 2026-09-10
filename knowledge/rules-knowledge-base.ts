@@ -9,7 +9,6 @@
  * Embeddings run in-process via Transformers.js — no cloud calls.
  */
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   pipeline,
   type FeatureExtractionPipeline,
@@ -17,12 +16,15 @@ import {
 import * as lancedb from "@lancedb/lancedb";
 import type { Table } from "@lancedb/lancedb";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-/** Committed vector store built from the D&D Basic Rules PDF. */
+/**
+ * Committed vector store built from the D&D Basic Rules PDF.
+ *
+ * Resolved from the current working directory rather than this file's location, so
+ * the module behaves identically whether it stays in `knowledge/` or you copy it
+ * into `src/` as Chapter 9 instructs. Run npm scripts from the repository root.
+ */
 export const KB_PATH = path.resolve(
-  __dirname,
-  "..",
+  process.cwd(),
   "knowledge",
   "dnd_knowledge_base",
 );
