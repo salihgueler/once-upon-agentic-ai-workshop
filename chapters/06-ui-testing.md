@@ -62,6 +62,10 @@ Open the URL Vite prints, normally <http://127.0.0.1:5173>.
 1. Forge a hero by choosing a name, gender, race, and class.
 2. Select **Begin Adventure**. The orchestrator asks the Character Agent to create the hero and generates the opening scene.
 3. In the game view, inspect the character sheet, send an action, or choose one of the Game Master's suggestions.
+
+![UI game view](../assets/ui-game.png)
+
+The game view shows the local character sheet, Game Master narrative, suggested actions, and MCP-backed dice results in one place.
 4. When a tool rolls dice, the matching die and result appear in the narrative.
 
 The UI consumes the validated Chapter 5 response directly:
