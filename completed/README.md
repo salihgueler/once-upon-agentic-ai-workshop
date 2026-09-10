@@ -13,6 +13,7 @@ exercise.
 | `04-mcp-integration/` | Cumulative agent plus MCP server and client |
 | `05-a2a-integration/` | Cumulative multi-agent backend |
 | `final/` | Complete backend expected before Chapters 6–8 |
+| `09-rag-rules/` | Chapter 9's Rules Agent using vector retrieval |
 
 Each snapshot preserves the same `src/` paths used in the attendee workspace, so
 you can compare files directly. The canonical React frontend remains in the root

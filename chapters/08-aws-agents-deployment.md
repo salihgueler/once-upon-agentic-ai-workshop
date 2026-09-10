@@ -1,6 +1,6 @@
 # Chapter 8 — Optional: Deploy the Agents with Amazon Bedrock AgentCore
 
-[← Chapter 7](07-cleanup.md) · [Back to README](../README.md)
+[← Chapter 7](07-cleanup.md) · [Optional Chapter 9 →](09-rag-vector-store.md) · [Back to README](../README.md)
 
 ---
 
@@ -288,4 +288,4 @@ Local processes, generated data, and Ollama are covered separately in
 
 ---
 
-[← Chapter 7](07-cleanup.md) · [Back to README](../README.md)
+[← Chapter 7](07-cleanup.md) · [Optional Chapter 9 →](09-rag-vector-store.md) · [Back to README](../README.md)

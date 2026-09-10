@@ -30,6 +30,7 @@ This is a **self-contained, local-first** workshop. Everything you need lives in
 | 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a web UI                    |
 | 7   | [Cleanup](chapters/07-cleanup.md)                           | Tidy up local processes, generated data, Ollama, and optional Bedrock |
 | 8   | [Optional: Deploy the Agents to AWS](chapters/08-aws-agents-deployment.md) | Deploy the backend with AgentCore CodeZip; keep React local |
+| 9   | [Optional: Real Retrieval with a Vector Store](chapters/09-rag-vector-store.md) | Swap keyword lookup for LanceDB + local embeddings (RAG) |
 
 > Complete chapters in order — each one builds on the previous.
 
@@ -75,6 +76,7 @@ once-upon-agentic-ai-workshop/
 │   ├── 05-a2a-integration/
 │   └── final/                # complete backend reference
 ├── chapters/
+├── knowledge/                # pre-built vector store + source PDF (Chapter 9)
 ├── agentcore/                # optional agents-only deployment after Chapter 5
 ├── package.json
 └── package-lock.json
@@ -114,6 +116,7 @@ By the end:
 - Orchestrate multiple cooperating agents with A2A
 - Wire it all into a real application with a React web UI
 - Optionally package and deploy the four backend services to AWS while keeping the UI local
+- Optionally upgrade rules lookup to real semantic retrieval with a local vector store
 
 ## Reference: the talks demo repository
 

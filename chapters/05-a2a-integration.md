@@ -85,7 +85,7 @@ export function lookupRule(query: string): Rule | null {
 }
 ```
 
-> **RAG is optional.** The Rules Agent only depends on the `lookupRule(query)` signature, not on where the data comes from. If you want real retrieval later, swap the body of `lookupRule` for a vector search (e.g. LanceDB + local embeddings) — nothing else has to change.
+> **RAG is optional.** The Rules Agent only depends on the `lookupRule(query)` signature, not on where the data comes from. If you want real retrieval, [Chapter 9](09-rag-vector-store.md) swaps this for a LanceDB vector search with local embeddings — a two-line change to this agent.
 
 ### Step 2 — Serve the agent over A2A (`src/rules-agent.ts`)
 
