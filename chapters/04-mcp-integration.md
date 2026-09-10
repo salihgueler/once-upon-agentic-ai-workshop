@@ -172,13 +172,29 @@ const gamemaster = new Agent({
 
 ### Step 3 — Chat, then always disconnect
 
-Wrap the loop in `try/finally` so the transport is released even on error or Ctrl-D:
+Wrap the loop in `try/finally` so the transport is released even on error or Ctrl-D.
+
+Ctrl-D (and piped input running out) closes stdin, and readline then rejects the
+*next* `question()` with `ERR_USE_AFTER_CLOSE`. Catch that one error and break, or the
+process dies with a stack trace instead of exiting cleanly:
 
 ```typescript
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 try {
   for (;;) {
-    const userInput = (await rl.question("\n🎲 Your request: ")).trim();
+    let userInput: string;
+    try {
+      userInput = (await rl.question("\n🎲 Your request: ")).trim();
+    } catch (error) {
+      // Ctrl-D / EOF closed stdin — leave the loop and let `finally` clean up.
+      if (
+        error instanceof Error &&
+        (error as NodeJS.ErrnoException).code === "ERR_USE_AFTER_CLOSE"
+      ) {
+        break;
+      }
+      throw error;
+    }
     if (["exit", "quit", "bye"].includes(userInput.toLowerCase())) break;
     const result = await gamemaster.invoke(userInput);
     console.log(result.toString());

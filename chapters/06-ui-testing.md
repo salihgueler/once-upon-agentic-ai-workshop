@@ -89,7 +89,7 @@ Model-authored Markdown is sanitized before rendering.
 | :-- | :-- |
 | **The opening scene fails** | Confirm all four Chapter 5 processes and Ollama are running. |
 | **Vite cannot reach the API** | Check `curl http://127.0.0.1:8009/health`, then restart `npm run web:dev`. |
-| **The character sheet stays empty** | Check the Character Agent terminal and confirm `src/characters.json` was created. |
+| **The character sheet stays empty** | Check the Character Agent terminal for a `🔧 Tool #1: create_character` line. If it is missing, the model narrated the creation instead of calling the tool — forge the hero again. |
 | **The model is slow** | Use a smaller tool-capable Ollama model through `OLLAMA_MODEL_ID`. |
 
 ## What you learned

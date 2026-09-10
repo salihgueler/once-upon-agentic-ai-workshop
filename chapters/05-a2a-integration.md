@@ -63,8 +63,36 @@ export const RULES: Rule[] = [
     text: "Roll a d20 and add the relevant ability modifier; compare to the DC.",
     keywords: ["ability", "check", "dexterity", "strength", "dc", "d20"],
   },
-  // ...saving throws, attack rolls, advantage/disadvantage, initiative,
-  //    4d6-drop-lowest ability generation
+  {
+    topic: "Saving Throws",
+    page: 59,
+    text: "A saving throw is a d20 roll plus the relevant ability modifier, made to resist a threat such as a spell, trap, or poison, against a DC set by the effect.",
+    keywords: ["saving", "throw", "save", "resist", "spell", "poison"],
+  },
+  {
+    topic: "Attack Rolls",
+    page: 73,
+    text: "To attack, roll a d20 and add your attack modifier. If the total meets or exceeds the target's Armor Class (AC), the attack hits and you roll damage.",
+    keywords: ["attack", "roll", "hit", "armor", "class", "ac", "damage"],
+  },
+  {
+    topic: "Advantage & Disadvantage",
+    page: 57,
+    text: "With advantage, roll two d20s and take the higher. With disadvantage, take the lower. They do not stack; you have one or the other, never multiple.",
+    keywords: ["advantage", "disadvantage", "two", "d20", "higher", "lower"],
+  },
+  {
+    topic: "Initiative",
+    page: 73,
+    text: "At the start of combat, every combatant rolls a Dexterity check for initiative. The DM orders turns from highest to lowest total.",
+    keywords: ["initiative", "combat", "turn", "order", "dexterity"],
+  },
+  {
+    topic: "Ability Score Generation",
+    page: 12,
+    text: "To generate ability scores, roll four d6, drop the lowest die, and total the remaining three. Do this six times, then assign the totals to your abilities.",
+    keywords: ["ability", "score", "generate", "4d6", "drop", "lowest", "stats"],
+  },
 ];
 
 export function lookupRule(query: string): Rule | null {
@@ -162,17 +190,59 @@ export interface Character {
   inventory: { item_name: string; quantity: number }[]; created_at: string;
 }
 
-// readDB / writeDB (JSON file), plus:
-export function listCharacters(): Character[] { /* ... */ return []; }
-export function findCharacter(name: string): Character | undefined { /* ... */ return undefined; }
-export function saveCharacter(input: {
-  name: string; character_class: string; race: string; gender: string; stats: Stats;
-}): Character { /* build with level 1, starter inventory, persist, return */ return {} as Character; }
+interface CharactersDB {
+  characters: Record<string, Character>;
+}
+
+function readDB(): CharactersDB {
+  if (!fs.existsSync(DB_PATH)) return { characters: {} };
+  return JSON.parse(fs.readFileSync(DB_PATH, "utf-8")) as CharactersDB;
+}
+
+function writeDB(db: CharactersDB): void {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+}
+
+export function listCharacters(): Character[] {
+  return Object.values(readDB().characters);
+}
+
+export function findCharacter(name: string): Character | undefined {
+  return listCharacters().find((c) => c.name.toLowerCase() === name.toLowerCase());
+}
+
+export interface NewCharacter {
+  name: string;
+  character_class: string;
+  race: string;
+  gender: string;
+  stats: Stats;
+}
+
+export function saveCharacter(input: NewCharacter): Character {
+  const character: Character = {
+    character_id: randomUUID(),
+    ...input,
+    level: 1,
+    experience: 0,
+    inventory: [
+      { item_name: "Starting Equipment Pack", quantity: 1 },
+      { item_name: "Gold Pieces", quantity: 100 },
+    ],
+    created_at: new Date().toISOString(),
+  };
+  const db = readDB();
+  db.characters[character.character_id] = character;
+  writeDB(db);
+  return character;
+}
 ```
 
-> The complete storage module is available at
+> `DB_PATH` resolves next to this module, so the store lands at `src/characters.json`.
+> Compare with
 > [`completed/05-a2a-integration/src/character-store.ts`](../completed/05-a2a-integration/src/character-store.ts)
-> for comparison after you implement the structure above.
+> when you are done.
 
 ### Step 2 — The agent (`src/character-agent.ts`)
 
@@ -201,11 +271,37 @@ const createCharacter = tool({
   callback: (input) => JSON.stringify(saveCharacter(input)),
 });
 
-// find_character_by_name and list_all_characters follow the same shape.
+The other two tools follow the same shape — a schema, and a callback that returns a
+string:
 
+```typescript
+const findCharacterByName = tool({
+  name: "find_character_by_name",
+  description: "Find a stored character by name.",
+  inputSchema: z.object({ name: z.string().describe("The character's name") }),
+  callback: (input) => {
+    const found = findCharacter(input.name);
+    return found ? JSON.stringify(found) : `❌ Character '${input.name}' not found`;
+  },
+});
+
+const listAllCharacters = tool({
+  name: "list_all_characters",
+  description: "List every character in the roster.",
+  inputSchema: z.object({}),
+  callback: () => {
+    const all = listCharacters();
+    return all.length ? JSON.stringify(all) : "📜 No characters yet";
+  },
+});
+```
+
+Then register all three:
+
+```typescript
 const agent = new Agent({
   model: createModel(),
-  tools: [/* findCharacterByName, listAllCharacters, */ createCharacter],
+  tools: [findCharacterByName, listAllCharacters, createCharacter],
   systemPrompt: `You are a D&D character-management specialist. Roll ability scores with
     4d6 drop lowest, then use the tools to create, find, or list characters.`,
 });
@@ -272,7 +368,12 @@ const askRulesAgent = tool({
   inputSchema: z.object({ question: z.string().describe("The rules question") }),
   callback: async (input) => (await rulesAgent.invoke(input.question)).toString(),
 });
-// askCharacterAgent follows the same shape.
+const askCharacterAgent = tool({
+  name: "ask_character_agent",
+  description: "Ask the Character Agent to create, find, or list characters.",
+  inputSchema: z.object({ question: z.string().describe("The character request") }),
+  callback: async (input) => (await characterAgent.invoke(input.question)).toString(),
+});
 
 const diceMcp = new McpClient({
   transport: new StreamableHTTPClientTransport(
@@ -282,7 +383,7 @@ const diceMcp = new McpClient({
 
 const gamemaster = new Agent({
   model: createModel(),
-  tools: [askRulesAgent, /* askCharacterAgent, */ diceMcp],
+  tools: [askRulesAgent, askCharacterAgent, diceMcp],
   systemPrompt: `You are a D&D Game Master orchestrating specialists and tools.
     Use ask_rules_agent for rules, ask_character_agent for characters, and roll_dice
     for every roll. Populate dice_rolls and action_suggestions in your answer.`,
@@ -350,6 +451,13 @@ curl -X POST http://127.0.0.1:8009/inquire \
 ```
 
 Each response is the validated `gameMasterSchema` object: a `response`, `action_suggestions`, `details`, and a `dice_rolls` array.
+
+> **If a character isn't saved, just ask again.** Local models occasionally *narrate*
+> creating a character without actually calling `create_character`. The reply looks
+> right, but no `src/characters.json` appears and `curl http://127.0.0.1:8009/user/<name>`
+> returns 404. That is model behaviour, not a bug in your code — re-send the request, or
+> phrase it more explicitly ("Use create_character to create ..."). Watch the Character
+> Agent's terminal: a real tool call prints a `🔧 Tool #1: create_character` line.
 
 ## What's happening under the hood
 
