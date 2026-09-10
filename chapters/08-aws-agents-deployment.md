@@ -188,19 +188,72 @@ use DynamoDB or another durable store before treating this as a production servi
 - Add durable storage, authorization, quotas, budgets, alarms, and evaluation before
   production use.
 
-## 6. Cleanup
+## 6. Teardown
 
-Ask the CLI to remove the project resources, then deploy the removal plan:
+> **A deployed AgentCore runtime keeps costing money until you remove it.** Complete
+> this section in order in the same session in which you deployed — do not leave it
+> for later.
+
+### 6.1 Stop the local processes
+
+Step 5 started two local processes. Return to each terminal and press `Ctrl+C`:
+
+- the SigV4 proxy (`npm run agentcore:proxy`)
+- the Vite dev server (`npm run web:dev`)
+
+If you are unsure whether something is still bound, check those specific ports and
+stop only the PIDs you find:
+
+```bash
+lsof -i :8009
+lsof -i :5173
+kill <pid>
+```
+
+### 6.2 Remove the cloud resources
+
+Confirm you are pointed at the workshop account before you remove anything:
+
+```bash
+aws sts get-caller-identity
+```
+
+Then ask the CLI to remove the project resources and deploy that removal plan:
 
 ```bash
 agentcore remove all
 agentcore deploy
+```
+
+Review the removal diff and confirm it targets the account you just verified before
+approving it. This deletes the deployed runtime and the supporting resources the CLI
+created for it.
+
+### 6.3 Verify nothing is left running
+
+```bash
 agentcore status
 ```
 
-Review the removal diff and confirm the same workshop account before approving it.
-The final status should show no deployed runtime resources. Generated local files
-can then be removed safely:
+The status output should list no deployed runtime resources. If it still shows a
+runtime, re-run `agentcore deploy` and re-read the diff — do not stop here, because a
+runtime that survives teardown continues to bill.
+
+Two things the CLI does not remove for you:
+
+- **CloudWatch log groups** for the runtime persist after the runtime is gone. They
+  are cheap but not free, and they retain your invocation logs. List and delete the
+  ones belonging to this workshop:
+
+  ```bash
+  aws logs describe-log-groups --query "logGroups[?contains(logGroupName, 'GameMaster')].logGroupName"
+  aws logs delete-log-group --log-group-name <log-group-name>
+  ```
+
+- **Bedrock model access** stays enabled on your account. It costs nothing when idle,
+  so there is no action required.
+
+### 6.4 Remove the generated local files
 
 ```bash
 rm agentcore/agentcore.json
@@ -211,7 +264,19 @@ rm -r agentcore/GameMaster
 ```
 
 Remove only these named paths. Do not delete the tracked template, runtime adapter,
-proxy, or configuration scripts.
+proxy, or configuration scripts — they are the workshop source.
+
+### 6.5 Confirm the bill
+
+AgentCore charges accrue per runtime and per invocation, so a successful teardown
+should flatten your costs within a day. Check the next day in
+[Cost Explorer](https://console.aws.amazon.com/cost-management/home) or the
+[Billing console](https://console.aws.amazon.com/billing/home), filtered to Bedrock,
+and confirm that charges stop after your teardown timestamp. If they do not, a
+resource survived removal — return to step 6.3.
+
+Local processes, generated data, and Ollama are covered separately in
+[Chapter 7](07-cleanup.md).
 
 ## Official references
 
