@@ -84,11 +84,11 @@ npm run agent
 
 Watch the agent:
 
-1. Read the character-creation request
-2. Plan how many rolls it needs (4 abilities × 4d6 each)
-3. Call `roll_dice` repeatedly
-4. Apply the "drop the lowest die" rule
-5. Present the final ability scores
+1. Receive an initiative-roll request
+2. Call `roll_dice` exactly once with `faces: 20`
+3. Report the callback's exact result
+
+Once that works, try the advanced challenge: extend the tool with a `count` field and generate ability scores with 4d6-drop-lowest.
 
 ## Reference solution
 
@@ -120,7 +120,7 @@ const diceMaster = new Agent({
 });
 
 const result = await diceMaster.invoke(
-  "Help me create a new D&D character! Roll the strength, wisdom, charisma and intelligence ability scores using the 4d6-drop-lowest method.",
+  "Use roll_dice exactly once to roll a d20 for initiative. Report the exact tool result.",
 );
 console.log(result);
 ```

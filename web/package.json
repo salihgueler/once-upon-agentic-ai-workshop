@@ -5,7 +5,7 @@
   "type": "module",
   "description": "React 19 + Vite frontend for the D&D Game Master orchestrator (Chapter 6).",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1",
     "build": "tsc --build && vite build",
     "preview": "vite preview",
     "lint": "eslint ."
