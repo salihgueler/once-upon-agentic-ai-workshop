@@ -132,6 +132,8 @@ Because the whole workshop shares this one seam, switching providers is a config
 | 5       | Agent-to-Agent (A2A) orchestration |
 | 6       | Web UI for your Game Master        |
 | 7       | Cleanup                            |
+| 8       | Optional: deploy the agents to AWS |
+| 9       | Optional: real retrieval with a vector store |
 
 ---
 

@@ -22,7 +22,6 @@ Return to each terminal and press `Ctrl+C` to stop it:
 - Character Agent
 - Gamemaster Orchestrator
 - The React web dev server (Chapter 6)
-- Any tunnel you started for the web UI
 
 If you're unsure whether something is still listening, check the ports the workshop
 used and stop only those specific processes:
@@ -50,7 +49,13 @@ rm src/fibonacci.ts
 
 # The character store
 rm src/characters.json
+
+# The retrieval module, if you copied it in for Chapter 9
+rm src/rules-knowledge-base.ts
 ```
+
+Leave `knowledge/` alone — the pre-built vector store and PDF are tracked workshop
+content, not generated data.
 
 If you're finished with the project entirely, you can remove the installed
 dependencies for the backend and the web client:
@@ -59,6 +64,10 @@ dependencies for the backend and the web client:
 rm -r node_modules/
 rm -r web/node_modules/
 ```
+
+> If you did [Chapter 9](09-rag-vector-store.md), the embedding model was cached inside
+> `node_modules/@huggingface/transformers/.cache` (~87MB). Removing `node_modules/`
+> reclaims it; there is nothing cached in your home directory.
 
 > Remove specific, named paths inside the project only. Do **not** run blanket or
 > recursive deletes from a parent directory (for example `rm -rf *` or
@@ -105,6 +114,8 @@ resources.
 
 - Try the [optional agents-only AWS deployment](08-aws-agents-deployment.md) — package
   the four backend services with AgentCore CodeZip while keeping React local.
+- Try [optional Chapter 9](09-rag-vector-store.md) — swap the Rules Agent's keyword
+  lookup for real semantic retrieval over a local vector store.
 - Apply these patterns to your own project — pick a domain you care about and design
   the agents the same way.
 - Read the [Strands documentation](https://strandsagents.com/latest/documentation/docs/)

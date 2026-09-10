@@ -157,7 +157,8 @@ npm run kb:build
 
 It extracts text from the PDF, strips the repeated page furniture, packs sentences into
 ~550-character passages, embeds each one, and overwrites the LanceDB table. On a laptop
-this takes a few minutes and downloads the ~23MB embedding model on first run.
+this takes a few minutes and downloads the embedding model on first run (cached under
+`node_modules/@huggingface/transformers/.cache`).
 
 To index your own source, drop a PDF in `knowledge/`, update `PDF_PATH` in
 `knowledge/build-knowledge-base.ts`, and re-run. Nothing else changes — the agent does not
