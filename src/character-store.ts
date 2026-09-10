@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "characters.json");
+const configuredDBPath = process.env["CHARACTER_STORE_PATH"]?.trim();
+const DB_PATH = configuredDBPath
+  ? path.resolve(configuredDBPath)
+  : path.join(__dirname, "characters.json");
 
 export interface Stats {
   strength: number;
@@ -43,6 +46,7 @@ function readDB(): CharactersDB {
 }
 
 function writeDB(db: CharactersDB): void {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
 }
 

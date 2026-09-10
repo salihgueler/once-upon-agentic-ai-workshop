@@ -24,3 +24,7 @@ npm-debug.log*
 
 # Workshop runtime data
 src/characters.json
+
+# AWS CDK output
+deploy/cdk.out/
+deploy/cdk.context.json

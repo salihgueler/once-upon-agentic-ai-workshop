@@ -6,7 +6,7 @@ A hands-on workshop that takes you from your first AI agent to a production-styl
 
 > _"Roll for Initiative... in TypeScript!"_
 
-This is a **self-contained, local-first** workshop. Everything you need lives in this repository: each chapter is a standalone `.md` file in `chapters/`, and you build the source code yourself as you go — there is no separate companion repository to clone. It runs entirely on your machine with a local model by default (**Ollama**); Amazon Bedrock is an **optional** cloud provider you can switch to if you prefer.
+This is a **self-contained, local-first** workshop. Everything you need lives in this repository: each chapter is a standalone `.md` file in `chapters/`, and you build the source code yourself as you go — there is no separate companion repository to clone. It runs entirely on your machine with a local model by default (**Ollama**); Amazon Bedrock is an **optional** cloud provider you can switch to if you prefer. After the local workshop, an optional extension deploys only the four backend agent services to AWS while the React app stays local.
 
 ---
 
@@ -27,6 +27,7 @@ This is a **self-contained, local-first** workshop. Everything you need lives in
 | 5   | [The Grand Alliance: A2A](chapters/05-a2a-integration.md)   | Three agents collaborating via Agent-to-Agent                 |
 | 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a web UI                    |
 | 7   | [Cleanup](chapters/07-cleanup.md)                           | Tidy up local processes, generated data, Ollama, and optional Bedrock |
+| 8   | [Optional: Deploy the Agents to AWS](chapters/08-aws-agents-deployment.md) | Run the four backend services on Fargate with Bedrock; keep React local |
 
 > Complete chapters in order — each one builds on the previous.
 
@@ -75,6 +76,7 @@ once-upon-agentic-ai-workshop/
 │   ├── package.json
 │   └── package-lock.json
 ├── chapters/
+├── deploy/                 # optional agents-only AWS deployment
 ├── package.json
 └── package-lock.json
 ```
@@ -111,6 +113,7 @@ By the end:
 - Connect agents to remote services with MCP
 - Orchestrate multiple cooperating agents with A2A
 - Wire it all into a real application with a React web UI
+- Optionally package and deploy the four backend services to AWS while keeping the UI local
 
 ## Reference: the talks demo repository
 

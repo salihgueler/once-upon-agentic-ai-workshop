@@ -9,6 +9,7 @@ import { createModel } from "./model.js";
 import { gameMasterSchema, type GameMasterResponse } from "./game-master-schema.js";
 
 const PORT = 8009;
+const HOST = process.env["HOST"]?.trim() || "127.0.0.1";
 
 // Remote specialists, wrapped as tools the orchestrator can call.
 const rulesAgent = new A2AAgent({ url: "http://127.0.0.1:8000" });
@@ -84,6 +85,6 @@ app.get("/user/:name", (req, res) => {
   res.json(character);
 });
 
-app.listen(PORT, "127.0.0.1", () => {
-  console.log(`🏰 D&D Game Master API running on http://127.0.0.1:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🏰 D&D Game Master API running on http://${HOST}:${String(PORT)}`);
 });

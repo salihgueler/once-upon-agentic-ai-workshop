@@ -1,6 +1,6 @@
 # Chapter 7 — Cleanup
 
-[← Chapter 6](06-ui-testing.md) · [Back to README](../README.md)
+[← Chapter 6](06-ui-testing.md) · [Optional Chapter 8 →](08-aws-agents-deployment.md) · [Back to README](../README.md)
 
 ---
 
@@ -96,11 +96,15 @@ Only relevant if you chose the **optional** Bedrock provider instead of Ollama.
 - If you created a **temporary Bedrock API key** for the workshop, let it expire or
   delete it in the Bedrock console so it can't be used later.
 
-There are no other AWS resources to tear down — the workshop provisions nothing in
-your account beyond model access.
+There are no other AWS resources to tear down if you only selected Bedrock as the
+model provider. If you continue to [Chapter 8](08-aws-agents-deployment.md), use
+that chapter's CDK teardown to remove the Fargate deployment and its supporting
+resources.
 
 ## Where to next
 
+- Try the [optional agents-only AWS deployment](08-aws-agents-deployment.md) — run
+  the four backend services on Fargate with Bedrock while keeping React local.
 - Apply these patterns to your own project — pick a domain you care about and design
   the agents the same way.
 - Read the [Strands documentation](https://strandsagents.com/latest/documentation/docs/)
@@ -110,4 +114,4 @@ your account beyond model access.
 
 ---
 
-[← Chapter 6](06-ui-testing.md) · [Back to README](../README.md)
+[← Chapter 6](06-ui-testing.md) · [Optional Chapter 8 →](08-aws-agents-deployment.md) · [Back to README](../README.md)
