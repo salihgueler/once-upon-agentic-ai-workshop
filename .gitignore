@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment — keep .env.example tracked, ignore real secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Local agent/dashboard metadata
+.kiro/
+
+# Workshop runtime data
+src/characters.json
+
+# AgentCore attendee/account-specific state
+agentcore/agentcore.json
+agentcore/aws-targets.json
+agentcore/.env.local
+agentcore/.cli/
+agentcore/.llm-context/
+agentcore/cdk/
+agentcore/*.zip
+agentcore/.scaffold/
+agentcore/*/staging/

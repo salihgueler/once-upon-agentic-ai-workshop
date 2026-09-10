@@ -8,79 +8,105 @@
 
 ## Quest objective
 
-To build your first agent and run it successfully.
+Build your first agent and run it successfully — against a model running locally on your own machine.
 
-Install the Strands library like the following:
+You already installed the Strands SDK in [Chapter 0](00-prerequisites.md) (`npm ci`). The dependency is pinned in `package.json`:
 
-```bash
-npm install @strands-agents/sdk
+```jsonc
+"@strands-agents/sdk": "1.17.0"
 ```
 
-Create a new file called `src/agent.ts`.
+Create `src/agent.ts` in this chapter. The shared `src/model.ts` helper is already provided; you import it but do not need to implement model-provider setup yourself.
 
-## Step 1 — Enable debug logging
+> **Create:** `src/agent.ts`<br>
+> **Reference after attempting the exercise:** [`completed/01-strands-basics/src/agent.ts`](../completed/01-strands-basics/src/agent.ts)
 
-In the TypeScript SDK, log verbosity is controlled by the `STRANDS_LOG_LEVEL` environment variable. Set it before running the script:
+## Step 1 — Choose a model with `createModel()`
 
-```bash
-STRANDS_LOG_LEVEL=debug npx tsx src/agent.ts
+Rather than hard-coding a provider in every chapter, the workshop centralizes model selection in `src/model.ts`. It returns a local Ollama model by default (via Strands' OpenAI Chat Completions provider), or an Amazon Bedrock model when `MODEL_PROVIDER=bedrock`.
+
+```typescript
+import { createModel } from "./model.js";
+
+const model = createModel(); // OpenAIModel (Ollama) by default
 ```
 
-Levels: `debug`, `info`, `warn`, `error`. Start with `info` and dial up to `debug` when you want to see what the agent is doing under the hood.
+> Note the `.js` extension on the import. This project is native ESM (`"type": "module"`), and TypeScript's `NodeNext` resolution requires the compiled extension in relative import paths.
 
-## Step 2 — Create the agent
+## Step 2 — Enable debug logging
 
-Create the agent with `new Agent({ ... })`. The `systemPrompt` shapes its personality:
+Strands log verbosity is controlled by the `STRANDS_LOG_LEVEL` environment variable. Levels: `debug`, `info`, `warn`, `error`. Start with `info`; dial up to `debug` to watch what the agent does under the hood:
+
+```bash
+npm run agent:debug     # runs with STRANDS_LOG_LEVEL=debug
+```
+
+## Step 3 — Create the agent
+
+Construct the agent with `new Agent({ ... })`. Pass the `model` from `createModel()`, and a `systemPrompt` to shape its personality:
 
 ```typescript
 import { Agent } from "@strands-agents/sdk";
+import { createModel } from "./model.js";
 
 const agent = new Agent({
-  systemPrompt: "You are a game master for a Dungeon & Dragon game",
+  model: createModel(),
+  systemPrompt: "You are a game master for a Dungeons & Dragons game.",
 });
 ```
 
-See the docs on [system prompts](https://strandsagents.com/latest/documentation/docs/user-guide/concepts/agents/prompts/).
+See the docs on [system prompts](https://strandsagents.com/).
 
-## Step 3 — Invoke the agent
+## Step 4 — Invoke the agent
 
-Agents are awaited:
+`invoke()` is async — await it:
 
 ```typescript
 const result = await agent.invoke(
   "Hi, I am an adventurer ready for adventure!",
 );
+
+console.log(result);
 ```
 
-See the [TypeScript quickstart](https://strandsagents.com/latest/documentation/docs/user-guide/quickstart/typescript/).
+## Step 5 — Run it
 
-## Step 4 — Run it
+Make sure Ollama is running (`ollama serve`) and you've pulled the model (`ollama pull gemma4`), then:
 
 ```bash
-npx tsx src/agent.ts
+npm run agent
 ```
 
 If the script returns enthusiastic flavor-text from a Game Master, you've successfully summoned an agent.
 
 ## Reference solution
 
+After you have attempted the exercise, compare your file with
+[`completed/01-strands-basics/src/agent.ts`](../completed/01-strands-basics/src/agent.ts).
+The complete expected contents are also shown here:
+
 ```typescript
 import { Agent } from "@strands-agents/sdk";
+import { createModel } from "./model.js";
 
 const agent = new Agent({
-  systemPrompt: "You are a game master for a Dungeon & Dragon game",
+  model: createModel(),
+  systemPrompt: "You are a game master for a Dungeons & Dragons game.",
 });
 
 const result = await agent.invoke(
   "Hi, I am an adventurer ready for adventure!",
 );
+
+console.log(result);
 ```
 
 ## What you learned
 
+- How the `createModel()` seam decouples your agent from a specific provider
 - How to set log level via `STRANDS_LOG_LEVEL`
-- How to build an agent with a system prompt
-- How to invoke an agent and get a result back
+- How to build an agent with a `model` and a `systemPrompt`
+- How to `invoke()` an agent and get a result back
 
 ---
 

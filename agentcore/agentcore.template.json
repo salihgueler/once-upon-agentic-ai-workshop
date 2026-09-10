@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
+  "name": "OnceUponAgenticAI",
+  "version": 1,
+  "managedBy": "CDK",
+  "tags": {
+    "agentcore:created-by": "once-upon-agentic-ai-workshop",
+    "agentcore:project-name": "OnceUponAgenticAI"
+  },
+  "runtimes": [
+    {
+      "name": "GameMaster",
+      "description": "Game Master orchestrator with loopback Rules, Character, and Dice MCP services.",
+      "build": "CodeZip",
+      "entrypoint": "main.js",
+      "codeLocation": "agentcore/runtime/",
+      "runtimeVersion": "NODE_22",
+      "networkMode": "PUBLIC",
+      "protocol": "HTTP",
+      "authorizerType": "AWS_IAM",
+      "instrumentation": {
+        "enableOtel": true
+      },
+      "envVars": [
+        { "name": "MODEL_PROVIDER", "value": "bedrock" },
+        { "name": "BEDROCK_MODEL_ID", "value": "__BEDROCK_MODEL_ID__" },
+        { "name": "MCP_PORT", "value": "8081" },
+        { "name": "MCP_SERVER_URL", "value": "http://127.0.0.1:8081/mcp" },
+        { "name": "CHARACTER_STORE_PATH", "value": "/mnt/session/characters.json" },
+        { "name": "STRANDS_LOG_LEVEL", "value": "info" }
+      ],
+      "lifecycleConfiguration": {
+        "idleRuntimeSessionTimeout": 900,
+        "maxLifetime": 28800
+      },
+      "filesystemConfigurations": [
+        {
+          "sessionStorage": {
+            "mountPath": "/mnt/session"
+          }
+        }
+      ]
+    }
+  ],
+  "memories": [],
+  "knowledgeBases": [],
+  "credentials": [],
+  "evaluators": [],
+  "onlineEvalConfigs": [],
+  "agentCoreGateways": [],
+  "policyEngines": [],
+  "configBundles": [],
+  "abTests": [],
+  "harnesses": [],
+  "datasets": [],
+  "payments": []
+}

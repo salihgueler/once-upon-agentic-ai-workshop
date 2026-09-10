@@ -1,6 +1,6 @@
 # Chapter 6 — Testing Your Game Master with the Web UI
 
-[← Chapter 5](05-a2a-integration.md) · [Back to README](../README.md) · [Next: Chapter 7 →](07-stretch-goals.md)
+[← Chapter 5](05-a2a-integration.md) · [Back to README](../README.md) · [Next: Chapter 7 →](07-cleanup.md)
 
 ---
 
@@ -8,45 +8,96 @@
 
 ## Quest objective
 
-Connect your locally-running orchestrator (port 8009 from Chapter 5) to a hosted web UI so you can chat with your Game Master through a browser instead of curl.
+Play through the complete Game Master experience in the React UI shipped in [`web/`](../web): forge a character, enter the realm, choose suggested actions, and see dice results and character stats.
 
-## Why we need a tunnel
+The workshop keeps the established gold-and-purple D&D interface used by the talks demo, cleaned up for strict TypeScript and the local structured API. You do not configure an MCP or Game Master URL in the browser.
 
-The hosted UI uses HTTPS, so it can't talk directly to `http://localhost:8009`. You need an HTTPS-tunnel that forwards public traffic to your local port.
+Before starting this chapter, your root `src/` should contain the Chapter 5 backend you built. If you need to recover, compare it with [`completed/final/src/`](../completed/final/src/); the commands below always run your root files.
 
-### Step 1 — Connect via the web UI
+> The [`web/`](../web) directory is the canonical workshop frontend. The separate
+> `game-master-frontend` repository is a legacy snapshot with an editable server URL;
+> attendees do not need to clone or run it.
 
-Open the [hosted Game Master UI](https://github.com/salihgueler/game-master-frontend) and:
+## Why no server URL is needed
 
-1. Paste your tunnel URL into the **Server URL** field
-2. Click **Connect**
-3. Start chatting
+The browser calls same-origin `/api/*` routes on Vite. Vite forwards them to the local orchestrator on port 8009:
+
+```text
+Browser ── /api/inquire ──▶ Vite (5173) ── /inquire ──▶ Game Master (8009)
+```
+
+This avoids cross-origin configuration and keeps the attendee flow focused on the agent system.
+
+## Step 1 — Start the fellowship
+
+Run the four Chapter 5 processes in separate terminals:
+
+```bash
+npm run mcp:server
+npm run agent:rules
+npm run agent:characters
+npm run game-master
+```
+
+Confirm the orchestrator is healthy:
+
+```bash
+curl http://127.0.0.1:8009/health
+# {"status":"healthy"}
+```
+
+## Step 2 — Start the web UI
+
+From the workshop root:
+
+```bash
+npm --prefix web ci
+npm run web:dev
+```
+
+Open the URL Vite prints, normally <http://127.0.0.1:5173>.
 
 ![UI home](../assets/ui-home.png)
 
-The UI provides:
+## Step 3 — Play the flow
 
-- A chat interface for D&D conversations
-- Real-time streaming of orchestrator responses
-- A nicer surface than raw curl
+1. Forge a hero by choosing a name, gender, race, and class.
+2. Select **Begin Adventure**. The orchestrator asks the Character Agent to create the hero and generates the opening scene.
+3. In the game view, inspect the character sheet, send an action, or choose one of the Game Master's suggestions.
 
-Watch your terminal logs — the orchestrator prints debug info as each request flows through.
+![UI game view](../assets/ui-game.png)
 
-## Customization ideas
+The game view shows the local character sheet, Game Master narrative, suggested actions, and MCP-backed dice results in one place.
+4. When a tool rolls dice, the matching die and result appear in the narrative.
 
-- Tweak the orchestrator's `SYSTEM_PROMPT` to change voice and tone
-- Add new custom tools for campaign-specific mechanics
-- Bolt on additional MCP servers
+The UI consumes the validated Chapter 5 response directly:
+
+```ts
+{
+  response: string;
+  action_suggestions: string[];
+  details: string;
+  dice_rolls: Array<{ dice_type: string; result: number; reason: string }>;
+}
+```
+
+Model-authored Markdown is sanitized before rendering.
 
 ## Troubleshooting
 
-| Problem                | Fix                                                                           |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| **Connection refused** | Confirm the orchestrator is running on port 8009 and the SSH tunnel is up     |
-| **Invalid Server URL** | Make sure you're using the _HTTPS_ URL printed by `localhost.run`, no typos   |
-| **Slow responses**     | Check your local CPU/RAM; consider a smaller model in the orchestrator config |
-| **Tunnel drops**       | Re-run the `ssh -R` command — `localhost.run` rotates URLs each session       |
+| Problem | Fix |
+| :-- | :-- |
+| **The opening scene fails** | Confirm all four Chapter 5 processes and Ollama are running. |
+| **Vite cannot reach the API** | Check `curl http://127.0.0.1:8009/health`, then restart `npm run web:dev`. |
+| **The character sheet stays empty** | Check the Character Agent terminal for a `🔧 Tool #1: create_character` line. If it is missing, the model narrated the creation instead of calling the tool — forge the hero again. |
+| **The model is slow** | Use a smaller tool-capable Ollama model through `OLLAMA_MODEL_ID`. |
+
+## What you learned
+
+- How a React client consumes a typed agent response
+- How Vite proxies a local multi-process backend without browser CORS configuration
+- How one UI flow combines character storage, A2A delegation, MCP dice tools, and structured output
 
 ---
 
-[← Chapter 5](05-a2a-integration.md) · [Back to README](../README.md) · [Next: Chapter 7 →](07-stretch-goals.md)
+[← Chapter 5](05-a2a-integration.md) · [Back to README](../README.md) · [Next: Chapter 7 →](07-cleanup.md)
