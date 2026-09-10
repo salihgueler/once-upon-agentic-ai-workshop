@@ -1,3 +1,5 @@
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { Agent, tool } from "@strands-agents/sdk";
 import { A2AExpressServer } from "@strands-agents/sdk/a2a/express";
 import { z } from "zod";
@@ -74,5 +76,15 @@ const server = new A2AExpressServer({
   port: PORT,
 });
 
-await server.serve();
-console.log(`⚔️  Character Agent running on http://127.0.0.1:${PORT}`);
+export async function startCharacterAgent(): Promise<void> {
+  await server.serve();
+  console.log(`⚔️  Character Agent running on http://127.0.0.1:${String(PORT)}`);
+}
+
+const entrypoint = process.argv[1];
+if (
+  entrypoint !== undefined &&
+  import.meta.url === pathToFileURL(path.resolve(entrypoint)).href
+) {
+  void startCharacterAgent();
+}

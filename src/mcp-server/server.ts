@@ -4,7 +4,7 @@ import express from "express";
 import { z } from "zod";
 import { rollDice } from "./dice.js";
 
-const PORT = 8080;
+const PORT = Number.parseInt(process.env["MCP_PORT"] ?? "8080", 10);
 
 /** Build a fresh server with the dice tool registered. */
 function createServer(): McpServer {

@@ -27,7 +27,7 @@ This is a **self-contained, local-first** workshop. Everything you need lives in
 | 5   | [The Grand Alliance: A2A](chapters/05-a2a-integration.md)   | Three agents collaborating via Agent-to-Agent                 |
 | 6   | [Web UI Testing](chapters/06-ui-testing.md)                 | Connect your local Game Master to a web UI                    |
 | 7   | [Cleanup](chapters/07-cleanup.md)                           | Tidy up local processes, generated data, Ollama, and optional Bedrock |
-| 8   | [Optional: Deploy the Agents to AWS](chapters/08-aws-agents-deployment.md) | Run the four backend services on Fargate with Bedrock; keep React local |
+| 8   | [Optional: Deploy the Agents to AWS](chapters/08-aws-agents-deployment.md) | Deploy the backend with AgentCore CodeZip; keep React local |
 
 > Complete chapters in order — each one builds on the previous.
 
@@ -76,7 +76,7 @@ once-upon-agentic-ai-workshop/
 │   ├── package.json
 │   └── package-lock.json
 ├── chapters/
-├── deploy/                 # optional agents-only AWS deployment
+├── agentcore/              # optional agents-only AgentCore deployment
 ├── package.json
 └── package-lock.json
 ```

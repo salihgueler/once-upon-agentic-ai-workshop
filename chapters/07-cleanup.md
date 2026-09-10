@@ -98,13 +98,13 @@ Only relevant if you chose the **optional** Bedrock provider instead of Ollama.
 
 There are no other AWS resources to tear down if you only selected Bedrock as the
 model provider. If you continue to [Chapter 8](08-aws-agents-deployment.md), use
-that chapter's CDK teardown to remove the Fargate deployment and its supporting
+that chapter's AgentCore removal workflow to delete the runtime and its supporting
 resources.
 
 ## Where to next
 
-- Try the [optional agents-only AWS deployment](08-aws-agents-deployment.md) — run
-  the four backend services on Fargate with Bedrock while keeping React local.
+- Try the [optional agents-only AWS deployment](08-aws-agents-deployment.md) — package
+  the four backend services with AgentCore CodeZip while keeping React local.
 - Apply these patterns to your own project — pick a domain you care about and design
   the agents the same way.
 - Read the [Strands documentation](https://strandsagents.com/latest/documentation/docs/)

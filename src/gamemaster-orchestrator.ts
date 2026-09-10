@@ -1,10 +1,12 @@
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { Agent, McpClient, tool } from "@strands-agents/sdk";
 import { A2AAgent } from "@strands-agents/sdk/a2a";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import express from "express";
 import { z } from "zod";
-import { findCharacter } from "./character-store.js";
+import { findCharacter, type Character } from "./character-store.js";
 import { createModel } from "./model.js";
 import { gameMasterSchema, type GameMasterResponse } from "./game-master-schema.js";
 
@@ -30,9 +32,11 @@ const askCharacterAgent = tool({
 });
 
 // The dice MCP server, passed straight in as a tool provider.
+const MCP_SERVER_URL =
+  process.env["MCP_SERVER_URL"]?.trim() || "http://localhost:8080/mcp";
 const diceMcp = new McpClient({
   transport: new StreamableHTTPClientTransport(
-    new URL("http://localhost:8080/mcp"),
+    new URL(MCP_SERVER_URL),
   ) as Transport,
 });
 
@@ -52,39 +56,63 @@ const gamemaster = new Agent({
   structuredOutputSchema: gameMasterSchema,
 });
 
-const app = express();
-app.use(express.json());
+export async function inquire(question: string): Promise<GameMasterResponse> {
+  const result = await gamemaster.invoke(question);
+  const structured = result.structuredOutput as GameMasterResponse | undefined;
+  return (
+    structured ?? {
+      response: result.toString(),
+      action_suggestions: [],
+      details: "",
+      dice_rolls: [],
+    }
+  );
+}
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "healthy" });
-});
+export function getCharacter(name: string): Character | undefined {
+  return findCharacter(name);
+}
 
-app.post("/inquire", async (req, res) => {
-  const { question } = req.body as { question?: string };
-  if (!question) {
-    res.status(400).json({ error: "Missing 'question'" });
-    return;
-  }
-  try {
-    const result = await gamemaster.invoke(question);
-    // Typed, already-validated output. No JSON.parse, no fence stripping.
-    const structured = result.structuredOutput as GameMasterResponse | undefined;
-    res.json(structured ?? { response: result.toString(), action_suggestions: [], details: "", dice_rolls: [] });
-  } catch (e) {
-    console.error(`Error handling /inquire: ${String(e)}`);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+export function startGameMasterServer(): void {
+  const app = express();
+  app.use(express.json());
 
-app.get("/user/:name", (req, res) => {
-  const character = findCharacter(req.params.name);
-  if (!character) {
-    res.status(404).json({ error: "Character not found" });
-    return;
-  }
-  res.json(character);
-});
+  app.get("/health", (_req, res) => {
+    res.json({ status: "healthy" });
+  });
 
-app.listen(PORT, HOST, () => {
-  console.log(`🏰 D&D Game Master API running on http://${HOST}:${String(PORT)}`);
-});
+  app.post("/inquire", async (req, res) => {
+    const { question } = req.body as { question?: string };
+    if (!question) {
+      res.status(400).json({ error: "Missing 'question'" });
+      return;
+    }
+    try {
+      res.json(await inquire(question));
+    } catch (error) {
+      console.error(`Error handling /inquire: ${String(error)}`);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/user/:name", (req, res) => {
+    const character = getCharacter(req.params.name);
+    if (!character) {
+      res.status(404).json({ error: "Character not found" });
+      return;
+    }
+    res.json(character);
+  });
+
+  app.listen(PORT, HOST, () => {
+    console.log(`🏰 D&D Game Master API running on http://${HOST}:${String(PORT)}`);
+  });
+}
+
+const entrypoint = process.argv[1];
+if (
+  entrypoint !== undefined &&
+  import.meta.url === pathToFileURL(path.resolve(entrypoint)).href
+) {
+  startGameMasterServer();
+}

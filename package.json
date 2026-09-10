@@ -17,6 +17,10 @@
     "web:dev": "npm --prefix web run dev",
     "web:build": "npm --prefix web run build",
     "web:lint": "npm --prefix web run lint",
+    "agentcore:init": "node agentcore/init.mjs",
+    "agentcore:configure": "node agentcore/configure.mjs",
+    "agentcore:type-check": "tsc -p agentcore/tsconfig.json",
+    "agentcore:proxy": "tsx agentcore/local-proxy.ts",
     "build": "tsc",
     "build:all": "npm run build && npm run web:build",
     "type-check": "tsc --noEmit"
@@ -33,7 +37,9 @@
   "license": "MIT",
   "dependencies": {
     "@a2a-js/sdk": "0.3.10",
+    "@aws-sdk/client-bedrock-agentcore": "3.1129.0",
     "@aws-sdk/client-bedrock-runtime": "3.1129.0",
+    "@aws-sdk/client-s3": "3.1129.0",
     "@modelcontextprotocol/sdk": "1.30.0",
     "@strands-agents/sdk": "1.17.0",
     "express": "5.2.1",

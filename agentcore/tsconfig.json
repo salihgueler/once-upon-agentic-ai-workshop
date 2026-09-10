@@ -13,7 +13,8 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "noEmit": true
   },
-  "include": ["bin/**/*.ts", "lib/**/*.ts"]
+  "include": ["runtime/**/*.ts", "local-proxy.ts"]
 }
