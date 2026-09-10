@@ -8,7 +8,10 @@
 
 ## Quest objective
 
-Tools are the primary way to extend an agent's capabilities — they let it fetch data, run shell commands, and edit files. In this chapter you'll equip your agent with the built-in `httpRequest` tool so it can read web pages and answer questions about them.
+Tools are the primary way to extend an agent's capabilities — they let it fetch data, run shell commands, and edit files. In this chapter you'll replace the Chapter 1 implementation in `src/agent.ts` with an agent equipped with the built-in `httpRequest` tool.
+
+> **Replace:** `src/agent.ts`<br>
+> **Reference after attempting the exercise:** [`completed/02-built-in-tools/src/agent.ts`](../completed/02-built-in-tools/src/agent.ts)
 
 > **Local models and tool use** — Tool calling requires a model trained for it. `gemma4:latest` is the workshop default because it was verified with Strands custom, HTTP, and MCP tools. If you swap models and tool calls appear as plain JSON text instead of executing, that is a model-compatibility failure—not a successful tool call.
 

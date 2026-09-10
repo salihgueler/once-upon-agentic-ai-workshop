@@ -6,14 +6,16 @@ A hands-on workshop that takes you from your first AI agent to a production-styl
 
 > _"Roll for Initiative... in TypeScript!"_
 
-This is a **self-contained, local-first** workshop. Everything you need lives in this repository: each chapter is a standalone `.md` file in `chapters/`, and you build the source code yourself as you go — there is no separate companion repository to clone. It runs entirely on your machine with a local model by default (**Ollama**); Amazon Bedrock is an **optional** cloud provider you can switch to if you prefer. After the local workshop, an optional extension deploys only the four backend agent services to AWS while the React app stays local.
+This is a **self-contained, local-first** workshop. Everything you need lives in this repository: each chapter is a standalone `.md` file in `chapters/`, and you build the backend source code yourself as you go — there is no separate companion repository to clone. Exact end-of-chapter references live under [`completed/`](completed/) so the starter workspace does not give away the exercise. It runs entirely on your machine with a local model by default (**Ollama**); Amazon Bedrock is an **optional** cloud provider you can switch to if you prefer. After the local workshop, an optional extension deploys only the four backend agent services to AWS while the React app stays local.
 
 ---
 
 ## Workshop format
 
-- **Workshop content** lives here, in `chapters/`. Each chapter walks you through writing the corresponding source files, then running them locally.
-- **You build the code** step by step. By the end you will have a small backend of agents plus a web UI, all assembled from the chapters — no external source download required.
+- **Build in the root `src/` directory.** A fresh clone provides only the shared `src/model.ts` model helper; each chapter tells you which files to create or replace.
+- **Use `completed/<chapter>/` only as a reference.** Each snapshot shows the expected state at the end of that chapter, and `completed/final/` contains the complete backend.
+- **The React client is provided.** [`web/`](web/) is the canonical maintained frontend used in Chapter 6; this workshop teaches agent integration rather than React construction.
+- **Complete chapters in order.** Later services depend on the files you built earlier.
 
 ## Table of contents
 
@@ -55,33 +57,31 @@ ollama pull gemma4
 
 Then open [Chapter 0](chapters/00-prerequisites.md) and follow the chapters in order.
 
-## Project layout you'll build
+## Project layout
 
-By the end of the workshop the project you assemble looks roughly like this — a
-backend of agents at the root under `src/`, plus a small React web client under
-`web/`:
+A fresh clone starts with the shared model helper and the provided React client. You
+create the remaining backend files under `src/` while following the chapters:
 
 ```
 once-upon-agentic-ai-workshop/
 ├── src/
-│   ├── agent.ts
-│   ├── model.ts
-│   ├── mcp-server/
-│   ├── mcp-client/
-│   ├── rules-agent.ts
-│   ├── character-agent.ts
-│   └── gamemaster-orchestrator.ts
-├── web/
-│   ├── src/
-│   ├── package.json
-│   └── package-lock.json
+│   └── model.ts              # provided model-selection helper
+├── web/                      # provided canonical React frontend
+├── completed/
+│   ├── 01-strands-basics/    # exact end-of-chapter references
+│   ├── 02-built-in-tools/
+│   ├── 03-custom-tools/
+│   ├── 04-mcp-integration/
+│   ├── 05-a2a-integration/
+│   └── final/                # complete backend reference
 ├── chapters/
-├── agentcore/              # optional agents-only AgentCore deployment
+├── agentcore/                # optional agents-only deployment after Chapter 5
 ├── package.json
 └── package-lock.json
 ```
 
-The chapters explain each file in the order you build and run it.
+By the end, your root `src/` should match `completed/final/src/`. Runtime commands
+always target your root `src/`; they never run the completed copies for you.
 
 ## What is Strands?
 

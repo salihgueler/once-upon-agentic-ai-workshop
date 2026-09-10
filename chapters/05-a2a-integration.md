@@ -10,7 +10,10 @@
 
 So far each agent has worked alone. Now you'll let multiple agents collaborate, each with its own tools and expertise, using [Agent2Agent (A2A)](https://strandsagents.com/).
 
-You'll build a three-agent D&D system orchestrated by a central Game Master.
+You'll build a three-agent D&D system orchestrated by a central Game Master. Create each file under your root `src/`; the repository does not pre-populate these exercise implementations.
+
+> **Create:** `src/local-rules.ts`, `src/rules-agent.ts`, `src/character-store.ts`, `src/character-agent.ts`, `src/game-master-schema.ts`, and `src/gamemaster-orchestrator.ts`<br>
+> **Reference after attempting the exercise:** [`completed/05-a2a-integration/src/`](../completed/05-a2a-integration/src/)
 
 ## Architecture
 
@@ -167,7 +170,9 @@ export function saveCharacter(input: {
 }): Character { /* build with level 1, starter inventory, persist, return */ return {} as Character; }
 ```
 
-> The full storage module is `src/character-store.ts` in this repo — copy it as-is; it's a clean pattern for file-backed tool state.
+> The complete storage module is available at
+> [`completed/05-a2a-integration/src/character-store.ts`](../completed/05-a2a-integration/src/character-store.ts)
+> for comparison after you implement the structure above.
 
 ### Step 2 — The agent (`src/character-agent.ts`)
 

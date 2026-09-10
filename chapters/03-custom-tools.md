@@ -8,7 +8,10 @@
 
 ## Quest objective
 
-Build the legendary **Dice of Destiny** — a custom tool that rolls a die with a configurable number of faces, exposed to the agent so it can roll dice itself.
+Replace the Chapter 2 implementation in `src/agent.ts` with the legendary **Dice of Destiny** — a custom tool that rolls a die with a configurable number of faces, exposed to the agent so it can roll dice itself.
+
+> **Replace:** `src/agent.ts`<br>
+> **Reference after attempting the exercise:** [`completed/03-custom-tools/src/agent.ts`](../completed/03-custom-tools/src/agent.ts)
 
 ## How custom tools work
 

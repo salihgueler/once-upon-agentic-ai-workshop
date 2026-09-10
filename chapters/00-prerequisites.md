@@ -36,15 +36,21 @@ npm --version
 
 ### 1. Get the workshop project
 
-This repository **is** the project — the exercise source lives in `src/` and the chapters walk you through it.
+This repository **is** the project. A fresh clone intentionally starts with only
+`src/model.ts` under the backend source tree; you create the remaining files while
+following the chapters. Exact recovery points live under `completed/` and are never
+used by the runtime commands automatically.
 
 ```bash
 git clone <this-repo-url>
 cd once-upon-agentic-ai-workshop
-npm install
+npm ci
+npm --prefix web ci
 ```
 
-`npm install` reads the committed `package-lock.json`, so everyone gets the exact same dependency versions (Strands `@strands-agents/sdk` `1.17.0`, `zod` `4.1.12`, and friends).
+Both commands read committed lockfiles, so everyone gets the exact same dependency
+versions. The root install covers Strands and the backend; the second installs the
+provided React client used in Chapter 6.
 
 ### 2. Start Ollama and pull a model
 
@@ -74,13 +80,18 @@ cp .env.example .env
 
 > The project loads these from your shell environment. To auto-load a `.env` file, either `export` the values, or use Node's built-in support: `node --env-file=.env ...`.
 
-### 4. Run your first agent
+### 4. Validate the starter workspace
+
+The starter backend intentionally contains only the provided model-selection helper.
+Confirm that it type-checks before you start building:
 
 ```bash
-npm run agent
+npm run build
 ```
 
-This runs `src/agent.ts`. If a Game Master replies with enthusiastic flavor text, your local setup works. On to Chapter 1.
+Chapter 1 has you create `src/agent.ts`; only then will `npm run agent` become
+available. This makes the first working agent the result of the exercise rather than
+something already present in the clone.
 
 ## Optional — use Amazon Bedrock
 

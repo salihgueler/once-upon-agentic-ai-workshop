@@ -23,7 +23,8 @@
     "agentcore:proxy": "tsx agentcore/local-proxy.ts",
     "build": "tsc",
     "build:all": "npm run build && npm run web:build",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "completed:type-check": "tsc -p completed/tsconfig.json"
   },
   "keywords": [
     "strands",

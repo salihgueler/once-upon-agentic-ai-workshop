@@ -27,7 +27,10 @@ Everything is already installed from [Chapter 0](00-prerequisites.md). The relev
 
 ## Part 1 — The MCP server
 
-The server has two files:
+The server has two files. Create the directories and files shown below; none of them are present in the starter workspace.
+
+> **Create:** `src/mcp-server/dice.ts`, `src/mcp-server/server.ts`, and `src/mcp-client/agent.ts`<br>
+> **Reference after attempting the exercise:** [`completed/04-mcp-integration/src/`](../completed/04-mcp-integration/src/)
 
 | File                                    | Responsibility                          |
 | --------------------------------------- | --------------------------------------- |
@@ -219,7 +222,10 @@ Type `exit` to quit — the client disconnects cleanly.
 
 ## Reference solutions
 
-The complete files are `src/mcp-server/dice.ts`, `src/mcp-server/server.ts`, and `src/mcp-client/agent.ts` in this repo. They match the snippets above, so you can compare your work against them directly.
+After attempting the exercise, compare your files with
+[`completed/04-mcp-integration/src/`](../completed/04-mcp-integration/src/).
+Runtime commands still target your root `src/`, so the completed snapshot never
+runs in place of your work.
 
 ## What you learned
 

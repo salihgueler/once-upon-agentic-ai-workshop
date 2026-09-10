@@ -10,13 +10,16 @@
 
 Build your first agent and run it successfully — against a model running locally on your own machine.
 
-You already installed the Strands SDK in [Chapter 0](00-prerequisites.md) (`npm install`). The dependency is pinned in `package.json`:
+You already installed the Strands SDK in [Chapter 0](00-prerequisites.md) (`npm ci`). The dependency is pinned in `package.json`:
 
 ```jsonc
 "@strands-agents/sdk": "1.17.0"
 ```
 
-The agent lives in `src/agent.ts`.
+Create `src/agent.ts` in this chapter. The shared `src/model.ts` helper is already provided; you import it but do not need to implement model-provider setup yourself.
+
+> **Create:** `src/agent.ts`<br>
+> **Reference after attempting the exercise:** [`completed/01-strands-basics/src/agent.ts`](../completed/01-strands-basics/src/agent.ts)
 
 ## Step 1 — Choose a model with `createModel()`
 
@@ -78,7 +81,9 @@ If the script returns enthusiastic flavor-text from a Game Master, you've succes
 
 ## Reference solution
 
-This is the complete `src/agent.ts`:
+After you have attempted the exercise, compare your file with
+[`completed/01-strands-basics/src/agent.ts`](../completed/01-strands-basics/src/agent.ts).
+The complete expected contents are also shown here:
 
 ```typescript
 import { Agent } from "@strands-agents/sdk";

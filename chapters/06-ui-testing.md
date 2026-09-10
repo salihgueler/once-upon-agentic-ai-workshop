@@ -12,6 +12,8 @@ Play through the complete Game Master experience in the React UI shipped in [`we
 
 The workshop keeps the established gold-and-purple D&D interface used by the talks demo, cleaned up for strict TypeScript and the local structured API. You do not configure an MCP or Game Master URL in the browser.
 
+Before starting this chapter, your root `src/` should contain the Chapter 5 backend you built. If you need to recover, compare it with [`completed/final/src/`](../completed/final/src/); the commands below always run your root files.
+
 > The [`web/`](../web) directory is the canonical workshop frontend. The separate
 > `game-master-frontend` repository is a legacy snapshot with an editable server URL;
 > attendees do not need to clone or run it.
