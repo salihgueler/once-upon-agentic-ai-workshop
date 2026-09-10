@@ -12,6 +12,10 @@ Play through the complete Game Master experience in the React UI shipped in [`we
 
 The workshop keeps the established gold-and-purple D&D interface used by the talks demo, cleaned up for strict TypeScript and the local structured API. You do not configure an MCP or Game Master URL in the browser.
 
+> The [`web/`](../web) directory is the canonical workshop frontend. The separate
+> `game-master-frontend` repository is a legacy snapshot with an editable server URL;
+> attendees do not need to clone or run it.
+
 ## Why no server URL is needed
 
 The browser calls same-origin `/api/*` routes on Vite. Vite forwards them to the local orchestrator on port 8009:
@@ -73,22 +77,6 @@ The UI consumes the validated Chapter 5 response directly:
 
 Model-authored Markdown is sanitized before rendering.
 
-## Optional — Run the orchestrator on another machine
-
-Create the tunnel on the machine running the orchestrator:
-
-```bash
-ssh -R 80:localhost:8009 nokey@localhost.run
-```
-
-Then restart Vite with the printed HTTPS URL as its proxy target:
-
-```bash
-GM_ORCHESTRATOR_URL=https://your-tunnel.example.com npm run web:dev
-```
-
-There is intentionally no editable server URL field in the UI; the proxy target is an operator setting, not a player decision.
-
 ## Troubleshooting
 
 | Problem | Fix |
@@ -97,7 +85,6 @@ There is intentionally no editable server URL field in the UI; the proxy target 
 | **Vite cannot reach the API** | Check `curl http://127.0.0.1:8009/health`, then restart `npm run web:dev`. |
 | **The character sheet stays empty** | Check the Character Agent terminal and confirm `src/characters.json` was created. |
 | **The model is slow** | Use a smaller tool-capable Ollama model through `OLLAMA_MODEL_ID`. |
-| **A remote tunnel changed** | Restart Vite with the new `GM_ORCHESTRATOR_URL`. |
 
 ## What you learned
 
