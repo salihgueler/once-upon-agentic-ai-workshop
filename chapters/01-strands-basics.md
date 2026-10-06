@@ -13,7 +13,7 @@ Build your first agent and run it successfully — against a model running local
 You already installed the Strands SDK in [Chapter 0](00-prerequisites.md) (`npm ci`). The dependency is pinned in `package.json`:
 
 ```jsonc
-"@strands-agents/sdk": "1.17.0"
+"@strands-agents/sdk": "1.19.0"
 ```
 
 Create `src/agent.ts` in this chapter. The shared `src/model.ts` helper is already provided; you import it but do not need to implement model-provider setup yourself.

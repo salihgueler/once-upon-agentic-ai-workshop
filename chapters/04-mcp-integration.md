@@ -19,7 +19,7 @@ Everything is already installed from [Chapter 0](00-prerequisites.md). The relev
 
 ```jsonc
 "@modelcontextprotocol/sdk": "1.30.0",
-"@strands-agents/sdk": "1.17.0",
+"@strands-agents/sdk": "1.19.0",
 "express": "5.2.1"
 ```
 
