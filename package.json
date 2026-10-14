@@ -46,7 +46,7 @@
     "@huggingface/transformers": "4.0.1",
     "@lancedb/lancedb": "0.27.2",
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@strands-agents/sdk": "1.17.0",
+    "@strands-agents/sdk": "1.19.0",
     "express": "5.2.1",
     "openai": "6.45.0",
     "pdf-parse": "2.4.5",
